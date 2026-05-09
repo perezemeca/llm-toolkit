@@ -18,7 +18,7 @@ Los archivos que genera `llm-toolkit init --caveman` también deben ser idempote
 
 Los archivos que genera `llm-toolkit init --codeburn` también deben ser idempotentes. CodeBurn no reemplaza RTK ni Caveman: solo aporta métricas y no debe usarse para validar funcionalidad del código.
 
-CodeBurn Guard escribe estado local en `.llm-toolkit/`, no debe versionarse y no debe bloquear tareas funcionales si CodeBurn falla o no está instalado.
+CodeBurn Guard se activa automáticamente mediante hooks de Codex instalados en `.codex/` por `llm-toolkit init --codeburn`. Escribe estado local en `.llm-toolkit/`, no debe versionarse y no debe bloquear tareas funcionales si CodeBurn falla o no está instalado.
 
 El contenido visible para usuarios, mensajes de ayuda y documentación debe mantenerse en español.
 
@@ -37,6 +37,14 @@ llm-toolkit init --codeburn
 llm-toolkit init --rtk --caveman --codeburn
 ```
 
+Esto crea o actualiza:
+
+```text
+.codex/config.toml
+.codex/hooks.json
+.codex/hooks/llm_toolkit_guard_hook.py
+```
+
 Uso:
 
 ```powershell
@@ -50,3 +58,5 @@ llm-toolkit guard start --interval 300 --timeout 30
 llm-toolkit guard status
 llm-toolkit guard stop
 ```
+
+Los comandos `guard` manuales son herramientas de diagnóstico; el flujo normal se dispara por hooks de Codex.

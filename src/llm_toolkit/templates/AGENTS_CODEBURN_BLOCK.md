@@ -27,19 +27,27 @@ No usar CodeBurn para validar funcionalidad del código; solo para métricas.
 
 ## CodeBurn Guard
 
+La optimización se activa automáticamente mediante Codex hooks instalados por:
+
+```powershell
+llm-toolkit init --codeburn
+```
+
 Al inicio de una tarea de programación con Codex, revisar si existe:
 
 ```powershell
 .llm-toolkit\alerts\CODEX_ALERT.md
 ```
 
-Después de ejecutar tests o en un checkpoint de programación, ejecutar:
+Después de ejecutar tests, los hooks ejecutan automáticamente:
 
 ```powershell
 llm-toolkit guard check --write-alert
 ```
 
-Si el guard informa `WARNING` o `CRITICAL`, aplicar regla de contexto fresco:
+No depender de que el usuario ejecute `guard check` manualmente. Los comandos manuales quedan disponibles para diagnóstico.
+
+Si existe alerta `WARNING` o `CRITICAL`, aplicar regla de contexto fresco:
 
 - iniciar un hilo nuevo o limpiar contexto si la tarea sigue siendo pesada;
 - usar solo el objetivo actual, archivos relevantes, salida fallida y restricciones vigentes;

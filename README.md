@@ -11,7 +11,7 @@ El proyecto integra RTK, Caveman, CodeBurn y CodeBurn Guard. Estas herramientas 
 | RTK | Compacta salidas de comandos y conserva trazabilidad local en `.rtk/history.db`. |
 | Caveman | Compacta respuestas y reportes de Codex para programación. |
 | CodeBurn | Observa consumo de tokens, costos, uso histórico y patrones de desperdicio. |
-| CodeBurn Guard | Ejecuta checkpoints livianos y genera alertas de contexto pesado. |
+| CodeBurn Guard | Instala hooks de Codex, ejecuta checkpoints automáticos y genera alertas de contexto pesado. |
 
 RTK, Caveman y CodeBurn no se reemplazan entre sí. Cada módulo cubre una parte distinta del flujo.
 
@@ -44,7 +44,7 @@ llm-toolkit doctor
 llm-toolkit status
 ```
 
-Ejecutar un checkpoint de contexto:
+El init instala hooks de Codex en `.codex/`, por lo que los checkpoints de Guard quedan automatizados para sesiones de Codex. El comando manual queda disponible para diagnóstico:
 
 ```powershell
 llm-toolkit guard check --write-alert
@@ -65,7 +65,7 @@ rtk pytest -p no:cacheprovider
 rtk gain
 ```
 
-Después de tests o en un checkpoint relevante:
+Después de tests, los hooks de Codex ejecutan Guard automáticamente. El comando manual queda disponible para diagnóstico:
 
 ```powershell
 llm-toolkit guard check --write-alert
@@ -90,7 +90,7 @@ llm-toolkit init --rtk --caveman lite --codeburn
 
 `--caveman` crea o actualiza el bloque Caveman y la skill `caveman-codex`. El nivel recomendado por defecto es `lite`.
 
-`--codeburn` crea o actualiza el bloque CodeBurn y las reglas de CodeBurn Guard en `AGENTS.md`. No instala CodeBurn automáticamente.
+`--codeburn` crea o actualiza el bloque CodeBurn, instala hooks de Codex en `.codex/` y agrega las reglas de CodeBurn Guard en `AGENTS.md`. No instala CodeBurn automáticamente.
 
 ### `llm-toolkit install-rtk`
 
@@ -137,6 +137,8 @@ CodeBurn no valida funcionalidad del código; solo aporta métricas de consumo y
 
 CodeBurn Guard ejecuta checkpoints livianos y escribe estado local en `.llm-toolkit/`.
 
+El flujo normal es automático vía hooks instalados por `llm-toolkit init --codeburn`. Los comandos siguientes son herramientas manuales de diagnóstico:
+
 ```powershell
 llm-toolkit guard check
 llm-toolkit guard check --write-alert
@@ -150,6 +152,14 @@ llm-toolkit guard stop
 `guard check --write-alert` crea `.llm-toolkit/alerts/CODEX_ALERT.md` si detecta `WARNING` o `CRITICAL`.
 
 `guard start/status/stop` registra una política local de checkpoints sin dejar procesos residentes colgados.
+
+Los hooks versionados viven en:
+
+```text
+.codex/config.toml
+.codex/hooks.json
+.codex/hooks/llm_toolkit_guard_hook.py
+```
 
 Guard no bloquea tareas si CodeBurn falla, no está instalado o no tiene datos locales.
 
@@ -170,7 +180,9 @@ llm-toolkit status
 - Usar Caveman `lite` para reportes compactos de programación.
 - Mantener Caveman fuera de tesis, documentación académica, FEA, simulación, cinemática y explicaciones técnicas extensas.
 - CodeBurn no valida funcionalidad del código.
+- Guard se activa automáticamente mediante hooks de Codex después de `llm-toolkit init --codeburn`.
 - Guard no bloquea tareas si falla CodeBurn.
+- Versionar `.codex/` cuando contiene hooks/config del proyecto.
 - No versionar `.rtk/` ni `.llm-toolkit/`.
 
 ## Desarrollo

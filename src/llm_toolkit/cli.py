@@ -161,8 +161,9 @@ def init_command(
 
     if codeburn:
         create_or_update_codeburn_integration(root)
-        console.print("[green]CodeBurn inicializado en AGENTS.md.[/green]")
+        console.print("[green]CodeBurn inicializado en AGENTS.md y hooks de Codex.[/green]")
         console.print("CodeBurn no se instala automáticamente y no bloquea tareas funcionales.")
+        console.print("CodeBurn Guard queda automatizado para checkpoints de Codex.")
         _print_commands("Comandos recomendados - CodeBurn", recommended_codeburn_commands())
 
     _print_commands("Comandos recomendados - RTK", recommended_commands(detection.stacks, detection.has_git))

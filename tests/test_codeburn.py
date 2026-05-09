@@ -94,6 +94,8 @@ def test_build_codeburn_agents_block_contiene_comandos_recomendados() -> None:
     assert ".llm-toolkit\\alerts\\CODEX_ALERT.md" in block
     assert "llm-toolkit guard check --write-alert" in block
     assert "regla de contexto fresco" in block
+    assert "se activa automáticamente mediante Codex hooks" in block
+    assert "No depender de que el usuario ejecute `guard check` manualmente" in block
 
 
 def test_init_rtk_caveman_codeburn_mantiene_tres_bloques(tmp_path: Path, monkeypatch) -> None:

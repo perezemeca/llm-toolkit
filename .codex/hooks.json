@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "command": "python .codex/hooks/llm_toolkit_guard_hook.py session_start",
+        "timeout": 35
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "command": "python .codex/hooks/llm_toolkit_guard_hook.py user_prompt_submit",
+        "timeout": 35
+      }
+    ],
+    "PostToolUse": [
+      {
+        "command": "python .codex/hooks/llm_toolkit_guard_hook.py post_tool_use",
+        "timeout": 35
+      }
+    ],
+    "Stop": [
+      {
+        "command": "python .codex/hooks/llm_toolkit_guard_hook.py stop",
+        "timeout": 10
+      }
+    ]
+  }
+}

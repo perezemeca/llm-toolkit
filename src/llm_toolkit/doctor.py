@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .caveman import CavemanStatus, get_status as get_caveman_status, recommended_cli_commands, recommended_codex_usage
+from .codex_hooks import CodexHookStatus, get_codex_hook_status
 from .codeburn import CodeBurnStatus, codeburn_status, recommended_cli_commands as recommended_codeburn_commands
 from .detect import ProjectDetection, detect_project
 from .files import read_text, skill_has_valid_frontmatter
@@ -27,6 +28,7 @@ class DoctorReport:
     caveman_codex_usage: tuple[str, ...]
     codeburn: CodeBurnStatus
     codeburn_commands: tuple[str, ...]
+    codex_hooks: CodexHookStatus
 
     @property
     def ok(self) -> bool:
@@ -45,6 +47,7 @@ def build_report(root: Path | str = ".") -> DoctorReport:
     skill = project_root / ".agents" / "skills" / "rtk-codex" / "SKILL.md"
     caveman = get_caveman_status(project_root)
     codeburn = codeburn_status(project_root)
+    codex_hooks = get_codex_hook_status(project_root)
     checks = (
         Check("rtk en PATH", rtk_in_path(), "rtk disponible" if rtk_in_path() else "rtk no encontrado en PATH"),
         Check("AGENTS.md", agents.exists(), "existe" if agents.exists() else "no existe"),
@@ -94,6 +97,31 @@ def build_report(root: Path | str = ".") -> DoctorReport:
             codeburn.agents_block_configured,
             "configurado" if codeburn.agents_block_configured else "no configurado",
         ),
+        Check(
+            ".codex/config.toml",
+            codex_hooks.config_exists,
+            "existe" if codex_hooks.config_exists else "no existe",
+        ),
+        Check(
+            "codex_hooks habilitado",
+            codex_hooks.hooks_enabled,
+            "true" if codex_hooks.hooks_enabled else "no configurado",
+        ),
+        Check(
+            ".codex/hooks.json",
+            codex_hooks.hooks_json_exists,
+            "existe" if codex_hooks.hooks_json_exists else "no existe",
+        ),
+        Check(
+            "guard hook script",
+            codex_hooks.hook_script_exists,
+            "existe" if codex_hooks.hook_script_exists else "no existe",
+        ),
+        Check(
+            "automatización CodeBurn Guard",
+            codex_hooks.automation_ok,
+            "configurada" if codex_hooks.automation_ok else "no configurada",
+        ),
     )
     return DoctorReport(
         detection=detection,
@@ -104,4 +132,5 @@ def build_report(root: Path | str = ".") -> DoctorReport:
         caveman_codex_usage=tuple(recommended_codex_usage()),
         codeburn=codeburn,
         codeburn_commands=tuple(recommended_codeburn_commands()),
+        codex_hooks=codex_hooks,
     )

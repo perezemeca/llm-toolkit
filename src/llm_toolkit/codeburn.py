@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from importlib.resources import files as resource_files
 from pathlib import Path
 
+from .codex_hooks import install_codex_guard_hooks
 from .files import read_text, upsert_marked_block, write_text
 
 
@@ -176,6 +177,7 @@ def create_or_update_codeburn_integration(root: Path | str = ".") -> bool:
     path = project_root / "AGENTS.md"
     before = read_text(path)
     after = upsert_marked_block(before, build_codeburn_agents_block(), CODEBURN_BEGIN, CODEBURN_END)
+    install_codex_guard_hooks(project_root)
     if before == after:
         return False
     write_text(path, after)
