@@ -28,10 +28,31 @@ def _template(name: str) -> str:
     return resource_files("llm_toolkit").joinpath("templates", name).read_text(encoding="utf-8")
 
 
-def _print_commands(commands: list[str] | tuple[str, ...]) -> None:
-    console.print("[bold]Comandos recomendados[/bold]")
+def _print_commands(title: str, commands: list[str] | tuple[str, ...]) -> None:
+    console.print(f"[bold]{title}[/bold]")
     for command in commands:
         console.print(f"  [cyan]{command}[/cyan]")
+
+
+def _print_caveman_recommendations(report: DoctorReport) -> None:
+    console.print("[bold]Comandos recomendados - Caveman[/bold]")
+    if report.caveman.configured:
+        level = report.caveman.level or "no detectado"
+        console.print(f"  Nivel actual: [cyan]{level}[/cyan]")
+    else:
+        console.print("  Caveman no configurado. Sugerido: [cyan]llm-toolkit init --caveman lite[/cyan]")
+    for command in report.caveman_commands:
+        console.print(f"  [cyan]{command}[/cyan]")
+
+    console.print("[bold]Uso en Codex[/bold]")
+    for usage in report.caveman_codex_usage:
+        console.print(f"  [cyan]{usage}[/cyan]")
+
+    console.print("[bold]Reglas Caveman[/bold]")
+    console.print("  Nivel recomendado por defecto: [cyan]lite[/cyan]")
+    console.print("  Usar solo para reportes compactos de programación con Codex.")
+    console.print("  Preservar rutas, comandos, errores exactos, nombres de tests y resultados.")
+    console.print("  No usar para tesis, FEA, simulación, cinemática ni redacción académica.")
 
 
 def _print_report(report: DoctorReport, title: str = "llm-toolkit doctor") -> None:
@@ -45,7 +66,8 @@ def _print_report(report: DoctorReport, title: str = "llm-toolkit doctor") -> No
     stacks = ", ".join(report.detection.stacks) if report.detection.stacks else "unknown"
     console.print(f"Git: {'detectado' if report.detection.has_git else 'no detectado'}")
     console.print(f"Stack: {stacks}")
-    _print_commands(report.commands)
+    _print_commands("Comandos recomendados - RTK", report.commands)
+    _print_caveman_recommendations(report)
 
 
 @app.callback()
@@ -114,7 +136,7 @@ def init_command(
         write_caveman_skill(root, _template("CAVEMAN_SKILL.md"))
         console.print(f"[green]Caveman-Codex inicializado.[/green] Nivel: {level}")
 
-    _print_commands(recommended_commands(detection.stacks, detection.has_git))
+    _print_commands("Comandos recomendados - RTK", recommended_commands(detection.stacks, detection.has_git))
 
 
 @app.command("doctor")

@@ -77,6 +77,21 @@ def test_status_muestra_caveman_sin_fallar(tmp_path: Path, monkeypatch) -> None:
     assert result.exit_code == 0
     assert "llm-toolkit status" in result.output
     assert "Caveman configurado" in result.output
+    assert "Comandos recomendados - Caveman" in result.output
+    assert "Nivel actual:" in result.output
+    assert "llm-toolkit init --caveman full" in result.output
+    assert "$caveman full" in result.output
+
+
+def test_doctor_sugiere_init_caveman_si_no_esta_configurado(tmp_path: Path, monkeypatch) -> None:
+    result = invoke_in_path(tmp_path, ["doctor"], monkeypatch)
+
+    assert result.exit_code == 0
+    assert "Comandos recomendados - RTK" in result.output
+    assert "Comandos recomendados - Caveman" in result.output
+    assert "Caveman no configurado" in result.output
+    assert "llm-toolkit init --caveman lite" in result.output
+    assert "No usar para tesis" in result.output
 
 
 def test_init_rtk_caveman_mantiene_ambos_bloques(tmp_path: Path, monkeypatch) -> None:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from .caveman import get_status as get_caveman_status
+from .caveman import CavemanStatus, get_status as get_caveman_status, recommended_cli_commands, recommended_codex_usage
 from .detect import ProjectDetection, detect_project
 from .files import read_text, skill_has_valid_frontmatter
 from .rtk import recommended_commands, rtk_in_path
@@ -21,6 +21,9 @@ class DoctorReport:
     detection: ProjectDetection
     checks: tuple[Check, ...]
     commands: tuple[str, ...]
+    caveman: CavemanStatus
+    caveman_commands: tuple[str, ...]
+    caveman_codex_usage: tuple[str, ...]
 
     @property
     def ok(self) -> bool:
@@ -67,4 +70,7 @@ def build_report(root: Path | str = ".") -> DoctorReport:
         detection=detection,
         checks=checks,
         commands=tuple(recommended_commands(detection.stacks, detection.has_git)),
+        caveman=caveman,
+        caveman_commands=tuple(recommended_cli_commands(caveman)),
+        caveman_codex_usage=tuple(recommended_codex_usage()),
     )

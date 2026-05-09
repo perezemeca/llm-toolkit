@@ -73,3 +73,22 @@ def get_status(root: Path) -> CavemanStatus:
         skill_frontmatter_valid=skill_has_valid_frontmatter(skill),
         level=detect_level(root),
     )
+
+
+def recommended_cli_commands(status: CavemanStatus) -> list[str]:
+    return [
+        "llm-toolkit init --caveman",
+        "llm-toolkit init --caveman lite",
+        "llm-toolkit init --caveman full",
+        "llm-toolkit init --caveman ultra",
+        "llm-toolkit init --rtk --caveman lite",
+    ]
+
+
+def recommended_codex_usage() -> list[str]:
+    return [
+        "$caveman",
+        "$caveman lite",
+        "$caveman full",
+        "$caveman ultra",
+    ]
