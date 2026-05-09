@@ -1,162 +1,188 @@
 # llm-toolkit
 
-`llm-toolkit` es un CLI instalable para preparar proyectos de programación para trabajo con Codex/LLM, RTK, Caveman, CodeBurn y futuras integraciones.
+`llm-toolkit` es un CLI para preparar proyectos de programación con Codex y herramientas auxiliares de control de contexto, salidas y costos.
 
-La primera versión implementa RTK-Codex. Caveman queda reservado como estructura futura y no se instala ni configura todavía.
-La integración Caveman-Codex es opcional y está limitada a reportes compactos de programación con Codex.
-La integración CodeBurn es opcional y sirve para observar consumo de tokens, costos, uso histórico y patrones de desperdicio.
+El proyecto integra RTK, Caveman, CodeBurn y CodeBurn Guard. Estas herramientas están pensadas para trabajo de programación con Codex; no deben usarse como flujo para tesis, documentación académica, FEA, simulación, cinemática ni redacción académica.
 
-## Instalación desde GitHub
+## Módulos
+
+| Módulo | Rol |
+| --- | --- |
+| RTK | Compacta salidas de comandos y conserva trazabilidad local en `.rtk/history.db`. |
+| Caveman | Compacta respuestas y reportes de Codex para programación. |
+| CodeBurn | Observa consumo de tokens, costos, uso histórico y patrones de desperdicio. |
+| CodeBurn Guard | Ejecuta checkpoints livianos y genera alertas de contexto pesado. |
+
+RTK, Caveman y CodeBurn no se reemplazan entre sí. Cada módulo cubre una parte distinta del flujo.
+
+## Instalación
+
+Instalar desde GitHub con `pipx`:
 
 ```powershell
 pipx install git+https://github.com/perezemeca/llm-toolkit.git
 ```
 
-## Uso rápido
+Actualizar desde `main`:
 
 ```powershell
-llm-toolkit init --rtk
-llm-toolkit init --caveman
-llm-toolkit init --codeburn
-llm-toolkit init --rtk --caveman --codeburn
+pipx install --force "git+https://github.com/perezemeca/llm-toolkit.git@main"
+```
+
+## Uso Rápido
+
+Inicializar un proyecto con RTK, Caveman en nivel `lite` y CodeBurn:
+
+```powershell
+llm-toolkit init --rtk --caveman lite --codeburn
+```
+
+Revisar estado:
+
+```powershell
 llm-toolkit doctor
-llm-toolkit install-rtk
-llm-toolkit install-codeburn
-llm-toolkit metrics
-llm-toolkit optimize
-llm-toolkit guard check --write-alert
 llm-toolkit status
 ```
 
-## Qué hace `init --rtk`
+Ejecutar un checkpoint de contexto:
 
-- Detecta si el directorio actual tiene Git.
-- Detecta stack Python, Node, Rust, Go, .NET o `unknown`.
-- Crea o actualiza `AGENTS.md` con un bloque RTK idempotente.
-- Crea `.agents/skills/rtk-codex/SKILL.md` con frontmatter válido.
-- Crea `tools/codex_rtk_env.ps1` como script manual opcional.
-- Crea `.rtk/` y configura RTK para usar `.rtk/history.db`.
-- Evita versionar `.rtk/` usando `.git/info/exclude` si hay Git o `.gitignore` si no hay Git.
-- Muestra comandos recomendados según el stack detectado.
+```powershell
+llm-toolkit guard check --write-alert
+```
 
-## Preparación recomendada para Codex en PowerShell
+## Flujo Recomendado En Proyecto Python
 
-Antes de trabajar en un proyecto con entorno virtual local:
+Preparar el entorno local en PowerShell:
 
 ```powershell
 $env:Path = "$PWD\.venv\Scripts;$env:Path"
 ```
 
-Luego usar RTK para las inspecciones habituales:
-
-```powershell
-rtk git status
-rtk git diff --stat
-rtk git diff --name-only
-rtk git ls-files
-rtk gain
-```
-
-Si el proyecto tiene pytest instalado:
+Validar con RTK:
 
 ```powershell
 rtk pytest -p no:cacheprovider
+rtk gain
 ```
 
-## Comandos
-
-### `llm-toolkit init --rtk`
-
-Inicializa RTK-Codex en el proyecto actual.
-
-### `llm-toolkit init --caveman`
-
-Inicializa Caveman-Codex en el proyecto actual. El nivel por defecto es `lite`.
-
-Niveles disponibles:
+Después de tests o en un checkpoint relevante:
 
 ```powershell
+llm-toolkit guard check --write-alert
+```
+
+Si aparece `.llm-toolkit\alerts\CODEX_ALERT.md`, revisar la alerta antes de continuar con más contexto.
+
+## Comandos Principales
+
+### `llm-toolkit init`
+
+Inicializa integraciones idempotentes en el proyecto actual.
+
+```powershell
+llm-toolkit init --rtk
 llm-toolkit init --caveman lite
-llm-toolkit init --caveman full
-llm-toolkit init --caveman ultra
+llm-toolkit init --codeburn
+llm-toolkit init --rtk --caveman lite --codeburn
 ```
 
-Alternativa explícita:
+`--rtk` crea o actualiza el bloque RTK en `AGENTS.md`, prepara la skill `rtk-codex`, crea herramientas auxiliares y configura `.rtk/`.
 
-```powershell
-llm-toolkit init --caveman --caveman-level full
-```
+`--caveman` crea o actualiza el bloque Caveman y la skill `caveman-codex`. El nivel recomendado por defecto es `lite`.
 
-### `llm-toolkit init --rtk --caveman`
-
-Inicializa ambas integraciones. RTK compacta salidas de comandos; Caveman compacta reportes del agente.
-
-### `llm-toolkit init --codeburn`
-
-Agrega o actualiza el bloque CodeBurn en `AGENTS.md`. No instala CodeBurn automáticamente y no bloquea tareas funcionales si no hay datos de sesiones locales.
-
-### `llm-toolkit init --rtk --caveman --codeburn`
-
-Inicializa las tres integraciones. RTK compacta salidas de comandos, Caveman compacta reportes del agente y CodeBurn observa consumo y costos.
-
-### `llm-toolkit doctor`
-
-Revisa el estado del proyecto: RTK en `PATH`, archivos esperados, frontmatter de skills, exclusión de `.rtk/`, Git, stack detectado, Caveman, CodeBurn y comandos recomendados.
-
-### `llm-toolkit status`
-
-Alias orientado a estado. Ejecuta la misma revisión básica que `doctor`.
+`--codeburn` crea o actualiza el bloque CodeBurn y las reglas de CodeBurn Guard en `AGENTS.md`. No instala CodeBurn automáticamente.
 
 ### `llm-toolkit install-rtk`
 
-En Windows descarga `rtk-x86_64-pc-windows-msvc.zip` desde GitHub Releases, extrae `rtk.exe`, lo copia a `%USERPROFILE%\.local\bin`, agrega esa carpeta al `PATH` de usuario si falta y ejecuta `rtk --version`.
+Instala `rtk.exe` en Windows desde GitHub Releases y lo agrega al `PATH` de usuario si hace falta.
+
+```powershell
+llm-toolkit install-rtk
+```
 
 ### `llm-toolkit install-codeburn`
 
-Verifica `node --version` y `npm --version`. Si ambos existen, ejecuta `npm install -g codeburn` y valida `codeburn --version` o `codeburn status`. No instala Node.
+Verifica `node --version` y `npm --version`. Si ambos existen, ejecuta `npm install -g codeburn` y valida `codeburn --version` o `codeburn status`.
 
-El comando del toolkit incluye el prefijo `llm-toolkit`: usar `llm-toolkit install-codeburn`, no `install-codeburn` suelto.
+```powershell
+llm-toolkit install-codeburn
+```
+
+El comando correcto incluye el prefijo `llm-toolkit`; no usar `install-codeburn` suelto. Este comando no instala Node.
 
 ### `llm-toolkit metrics`
 
-Ejecuta `codeburn status`. Variantes:
+Ejecuta métricas locales de CodeBurn.
 
 ```powershell
+llm-toolkit metrics
 llm-toolkit metrics --today
 llm-toolkit metrics --month
 llm-toolkit metrics --json
 ```
 
-Si CodeBurn no está instalado, informa `CodeBurn no está instalado. Ejecutar llm-toolkit install-codeburn.`
+Si CodeBurn no está instalado, informa cómo instalarlo sin bloquear tareas funcionales.
 
 ### `llm-toolkit optimize`
 
-Ejecuta `codeburn optimize`. Si falla o no hay datos locales de sesiones, reporta el error sin bloquear la tarea.
+Ejecuta `codeburn optimize` para detectar sesiones con contexto pesado y ahorro potencial.
 
-### `llm-toolkit guard check`
+```powershell
+llm-toolkit optimize
+```
 
-Ejecuta un chequeo liviano con CodeBurn y escribe `.llm-toolkit/state/context_health.json`. Si CodeBurn no está instalado o no tiene datos, informa `UNKNOWN` sin bloquear.
+CodeBurn no valida funcionalidad del código; solo aporta métricas de consumo y contexto.
+
+### `llm-toolkit guard`
+
+CodeBurn Guard ejecuta checkpoints livianos y escribe estado local en `.llm-toolkit/`.
 
 ```powershell
 llm-toolkit guard check
 llm-toolkit guard check --write-alert
-```
-
-Con `--write-alert`, si detecta `WARNING` o `CRITICAL`, crea `.llm-toolkit/alerts/CODEX_ALERT.md` con la regla de contexto fresco.
-
-### `llm-toolkit guard start/status/stop`
-
-Registra o desactiva una política local de checkpoints sin dejar procesos residentes colgados.
-
-```powershell
 llm-toolkit guard start --interval 300 --timeout 30
 llm-toolkit guard status
 llm-toolkit guard stop
 ```
 
+`guard check` escribe `.llm-toolkit/state/context_health.json`.
+
+`guard check --write-alert` crea `.llm-toolkit/alerts/CODEX_ALERT.md` si detecta `WARNING` o `CRITICAL`.
+
+`guard start/status/stop` registra una política local de checkpoints sin dejar procesos residentes colgados.
+
+Guard no bloquea tareas si CodeBurn falla, no está instalado o no tiene datos locales.
+
+### `llm-toolkit doctor` Y `llm-toolkit status`
+
+Revisan el estado del proyecto, las integraciones disponibles, el bloque CodeBurn en `AGENTS.md` y comandos recomendados.
+
+```powershell
+llm-toolkit doctor
+llm-toolkit status
+```
+
+## Reglas Operativas
+
+- No usar `rtk ls` en Windows.
+- Usar `rtk git ls-files` para listar archivos versionados.
+- Usar RTK para compactar salidas de comandos.
+- Usar Caveman `lite` para reportes compactos de programación.
+- Mantener Caveman fuera de tesis, documentación académica, FEA, simulación, cinemática y explicaciones técnicas extensas.
+- CodeBurn no valida funcionalidad del código.
+- Guard no bloquea tareas si falla CodeBurn.
+- No versionar `.rtk/` ni `.llm-toolkit/`.
+
 ## Desarrollo
+
+Instalar en modo editable con dependencias de desarrollo:
 
 ```powershell
 python -m pip install -e ".[dev]"
-pytest -p no:cacheprovider
+```
+
+Ejecutar tests:
+
+```powershell
+python -m pytest -p no:cacheprovider --basetemp .rtk\pytest_tmp_py
 ```
