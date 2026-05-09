@@ -5,7 +5,7 @@ Este proyecto fue preparado con `llm-toolkit`.
 ## Integraciones
 
 - RTK-Codex: activo.
-- Caveman: reservado para una versión futura.
+- Caveman-Codex: opcional para reportes compactos de programación con Codex.
 
 ## Uso recomendado
 

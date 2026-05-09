@@ -3,6 +3,7 @@
 `llm-toolkit` es un CLI instalable para preparar proyectos de programación para trabajo con Codex/LLM, RTK y futuras integraciones.
 
 La primera versión implementa RTK-Codex. Caveman queda reservado como estructura futura y no se instala ni configura todavía.
+La integración Caveman-Codex es opcional y está limitada a reportes compactos de programación con Codex.
 
 ## Instalación desde GitHub
 
@@ -14,6 +15,8 @@ pipx install git+https://github.com/perezemeca/llm-toolkit.git
 
 ```powershell
 llm-toolkit init --rtk
+llm-toolkit init --caveman
+llm-toolkit init --rtk --caveman
 llm-toolkit doctor
 llm-toolkit install-rtk
 llm-toolkit status
@@ -60,9 +63,31 @@ rtk pytest -p no:cacheprovider
 
 Inicializa RTK-Codex en el proyecto actual.
 
+### `llm-toolkit init --caveman`
+
+Inicializa Caveman-Codex en el proyecto actual. El nivel por defecto es `lite`.
+
+Niveles disponibles:
+
+```powershell
+llm-toolkit init --caveman lite
+llm-toolkit init --caveman full
+llm-toolkit init --caveman ultra
+```
+
+Alternativa explícita:
+
+```powershell
+llm-toolkit init --caveman --caveman-level full
+```
+
+### `llm-toolkit init --rtk --caveman`
+
+Inicializa ambas integraciones. RTK compacta salidas de comandos; Caveman compacta reportes del agente.
+
 ### `llm-toolkit doctor`
 
-Revisa el estado del proyecto: RTK en `PATH`, archivos esperados, frontmatter de la skill, exclusión de `.rtk/`, Git, stack detectado y comandos recomendados.
+Revisa el estado del proyecto: RTK en `PATH`, archivos esperados, frontmatter de skills, exclusión de `.rtk/`, Git, stack detectado, Caveman y comandos recomendados.
 
 ### `llm-toolkit status`
 

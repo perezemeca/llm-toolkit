@@ -28,16 +28,25 @@ def append_unique_line(path: Path, line: str) -> bool:
     return True
 
 
-def render_marked_block(block_body: str) -> str:
+def render_marked_block(
+    block_body: str,
+    begin_marker: str = RTK_BEGIN,
+    end_marker: str = RTK_END,
+) -> str:
     clean_body = block_body.strip("\n")
-    return f"{RTK_BEGIN}\n{clean_body}\n{RTK_END}"
+    return f"{begin_marker}\n{clean_body}\n{end_marker}"
 
 
-def upsert_marked_block(content: str, block_body: str) -> str:
-    marked_block = render_marked_block(block_body)
-    if RTK_BEGIN in content and RTK_END in content:
-        before, rest = content.split(RTK_BEGIN, 1)
-        _, after = rest.split(RTK_END, 1)
+def upsert_marked_block(
+    content: str,
+    block_body: str,
+    begin_marker: str = RTK_BEGIN,
+    end_marker: str = RTK_END,
+) -> str:
+    marked_block = render_marked_block(block_body, begin_marker, end_marker)
+    if begin_marker in content and end_marker in content:
+        before, rest = content.split(begin_marker, 1)
+        _, after = rest.split(end_marker, 1)
         updated = before.rstrip() + "\n\n" + marked_block + after
         return updated.strip() + "\n"
     if not content.strip():

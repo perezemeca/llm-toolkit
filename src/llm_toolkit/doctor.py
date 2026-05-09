@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from .caveman import get_status as get_caveman_status
 from .detect import ProjectDetection, detect_project
 from .files import read_text, skill_has_valid_frontmatter
 from .rtk import recommended_commands, rtk_in_path
@@ -36,6 +37,7 @@ def build_report(root: Path | str = ".") -> DoctorReport:
     project_root = detection.root
     agents = project_root / "AGENTS.md"
     skill = project_root / ".agents" / "skills" / "rtk-codex" / "SKILL.md"
+    caveman = get_caveman_status(project_root)
     checks = (
         Check("rtk en PATH", rtk_in_path(), "rtk disponible" if rtk_in_path() else "rtk no encontrado en PATH"),
         Check("AGENTS.md", agents.exists(), "existe" if agents.exists() else "no existe"),
@@ -48,6 +50,18 @@ def build_report(root: Path | str = ".") -> DoctorReport:
         Check(".rtk/", (project_root / ".rtk").exists(), "existe" if (project_root / ".rtk").exists() else "no existe"),
         Check("exclusión .rtk/", _rtk_excluded(project_root, detection.has_git), "configurada" if _rtk_excluded(project_root, detection.has_git) else "no configurada"),
         Check("Git", detection.has_git, "detectado" if detection.has_git else "no detectado"),
+        Check("Caveman configurado", caveman.configured, "sí" if caveman.configured else "no"),
+        Check("skill caveman-codex", caveman.skill_exists, "existe" if caveman.skill_exists else "no existe"),
+        Check(
+            "frontmatter Caveman",
+            caveman.skill_frontmatter_valid,
+            "válido" if caveman.skill_frontmatter_valid else "inválido o ausente",
+        ),
+        Check(
+            "nivel Caveman",
+            caveman.level is not None,
+            caveman.level if caveman.level is not None else "no detectado",
+        ),
     )
     return DoctorReport(
         detection=detection,
