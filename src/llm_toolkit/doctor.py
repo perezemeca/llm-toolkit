@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .caveman import CavemanStatus, get_status as get_caveman_status, recommended_cli_commands, recommended_codex_usage
+from .codeburn import CodeBurnStatus, codeburn_status, recommended_cli_commands as recommended_codeburn_commands
 from .detect import ProjectDetection, detect_project
 from .files import read_text, skill_has_valid_frontmatter
 from .rtk import recommended_commands, rtk_in_path
@@ -24,6 +25,8 @@ class DoctorReport:
     caveman: CavemanStatus
     caveman_commands: tuple[str, ...]
     caveman_codex_usage: tuple[str, ...]
+    codeburn: CodeBurnStatus
+    codeburn_commands: tuple[str, ...]
 
     @property
     def ok(self) -> bool:
@@ -41,6 +44,7 @@ def build_report(root: Path | str = ".") -> DoctorReport:
     agents = project_root / "AGENTS.md"
     skill = project_root / ".agents" / "skills" / "rtk-codex" / "SKILL.md"
     caveman = get_caveman_status(project_root)
+    codeburn = codeburn_status(project_root)
     checks = (
         Check("rtk en PATH", rtk_in_path(), "rtk disponible" if rtk_in_path() else "rtk no encontrado en PATH"),
         Check("AGENTS.md", agents.exists(), "existe" if agents.exists() else "no existe"),
@@ -65,6 +69,31 @@ def build_report(root: Path | str = ".") -> DoctorReport:
             caveman.level is not None,
             caveman.level if caveman.level is not None else "no detectado",
         ),
+        Check(
+            "Node en PATH",
+            codeburn.node.found,
+            codeburn.node.version or ("detectado" if codeburn.node.found else "no encontrado"),
+        ),
+        Check(
+            "npm en PATH",
+            codeburn.npm.found,
+            codeburn.npm.version or ("detectado" if codeburn.npm.found else "no encontrado"),
+        ),
+        Check(
+            "codeburn en PATH",
+            codeburn.codeburn.found,
+            codeburn.codeburn.version or ("detectado" if codeburn.codeburn.found else "no encontrado"),
+        ),
+        Check(
+            "Codex sessions detectadas",
+            codeburn.codex_sessions_detected,
+            "sí" if codeburn.codex_sessions_detected else "no",
+        ),
+        Check(
+            "bloque CodeBurn en AGENTS.md",
+            codeburn.agents_block_configured,
+            "configurado" if codeburn.agents_block_configured else "no configurado",
+        ),
     )
     return DoctorReport(
         detection=detection,
@@ -73,4 +102,6 @@ def build_report(root: Path | str = ".") -> DoctorReport:
         caveman=caveman,
         caveman_commands=tuple(recommended_cli_commands(caveman)),
         caveman_codex_usage=tuple(recommended_codex_usage()),
+        codeburn=codeburn,
+        codeburn_commands=tuple(recommended_codeburn_commands()),
     )

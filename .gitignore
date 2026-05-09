@@ -1,5 +1,6 @@
 .venv/
 .rtk/
+.llm-toolkit/
 __pycache__/
 *.py[cod]
 .pytest_cache/
