@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "llm-toolkit"
+version = "0.1.0"
+description = "CLI modular para preparar proyectos con Codex/LLM, RTK y futuras integraciones."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "perezemeca" }
+]
+dependencies = [
+  "typer>=0.12",
+  "rich>=13.7",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+]
+
+[project.scripts]
+llm-toolkit = "llm_toolkit.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/llm_toolkit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

@@ -1,0 +1,15 @@
+Antes de trabajar, usá RTK según AGENTS.md y la skill rtk-codex.
+
+Prepará el entorno en PowerShell con:
+
+$env:Path = "$PWD\.venv\Scripts;$env:Path"
+
+Usá:
+- rtk git status
+- rtk git diff --stat
+- rtk git diff --name-only
+- rtk git ls-files
+- rtk gain
+
+Cuando el proyecto ya tenga pytest instalado:
+- rtk pytest -p no:cacheprovider
