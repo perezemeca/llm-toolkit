@@ -20,9 +20,13 @@ dependencies = [
 dev = [
   "pytest>=8.0",
 ]
+gui = [
+  "PySide6>=6.7",
+]
 
 [project.scripts]
 llm-toolkit = "llm_toolkit.cli:app"
+llm-toolkit-workbench = "llm_toolkit.workbench_app:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/llm_toolkit"]

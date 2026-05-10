@@ -9,6 +9,7 @@ Este repositorio contiene el CLI `llm-toolkit`.
 - CodeBurn opcional para observabilidad de tokens, costos, uso histórico y patrones de desperdicio.
 - CodeBurn Guard opcional para checkpoints y alertas de contexto pesado.
 - Env/Stale/Statusbar para detectar rutas viejas, sesiones Codex no recargadas y estado compacto.
+- LLM Toolkit Workbench opcional como launcher Windows para Codex + PowerShell + statusbar.
 - Sin dependencias a proyectos específicos.
 
 ## Contrato de uso
@@ -112,3 +113,55 @@ dart test --reporter compact
 ```
 
 Si RTK ejecuta Flutter/Dart como fallback, usar la salida compacta propia de Flutter/Dart y RTK para git/diffs.
+
+## LLM Toolkit Workbench
+
+Workbench es una GUI opcional para Windows 10/11. No reemplaza Codex, no es un IDE y en esta primera versión no incrusta terminales reales. Funciona como lanzador y tablero breve para operar proyectos con Codex, PowerShell manual, RTK, Caveman, CodeBurn Guard, env/stale y statusbar.
+
+Instalación de desarrollo:
+
+```powershell
+python -m pip install -e ".[dev,gui]"
+```
+
+Uso:
+
+```powershell
+llm-toolkit workbench
+llm-toolkit workbench --project "C:\ruta\al\proyecto"
+llm-toolkit workbench --no-init --no-guard --no-statusbar
+llm-toolkit workbench --caveman-level lite
+```
+
+PySide6 es dependencia opcional (`gui = ["PySide6>=6.7"]`). Si no está instalado, el CLI debe fallar con un mensaje claro y sugerir:
+
+```powershell
+python -m pip install -e .[gui]
+pipx inject llm-toolkit PySide6
+```
+
+Configuración de usuario:
+
+```text
+%APPDATA%\llm-toolkit\workbench.json
+```
+
+Debe recordar último proyecto, recientes, nivel Caveman por defecto, preferencia de Windows Terminal, auto init y auto guard.
+
+Comportamiento esperado:
+
+- proyecto inexistente: ofrecer crearlo;
+- carpeta vacía: tratarla como proyecto nuevo;
+- carpeta con archivos: tratarla como proyecto existente;
+- sin `.git`: avisar y recomendar `git init`, sin ejecutarlo automáticamente;
+- sin `AGENTS.md`, `.codex` o `.rtk`: ofrecer inicializar Toolkit;
+- inicialización GUI: `llm-toolkit init --rtk --caveman <nivel> --codeburn`;
+- Codex: abrir PowerShell/Windows Terminal en el proyecto, correr `llm-toolkit guard check --write-alert` y luego `codex`;
+- PowerShell manual: anteponer `.venv\Scripts` al `PATH` si existe y mostrar comandos recomendados;
+- tres paneles: Codex, PowerShell manual y `llm-toolkit statusbar --watch --interval 5`; si no existe `wt.exe`, usar tres PowerShell separadas.
+
+Comando preparado para empaquetado futuro con PyInstaller, sin ejecutarlo automáticamente:
+
+```powershell
+python -m PyInstaller --name "LLM Toolkit Workbench" --windowed --collect-all PySide6 tools\workbench_entry.py
+```

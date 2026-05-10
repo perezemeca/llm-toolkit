@@ -46,6 +46,12 @@ llm-toolkit env
 llm-toolkit statusbar
 ```
 
+Abrir el Workbench de Windows:
+
+```powershell
+llm-toolkit workbench
+```
+
 El init instala hooks de Codex en `.codex/`, por lo que los checkpoints de Guard quedan automatizados para sesiones de Codex. El comando manual queda disponible para diagnóstico:
 
 ```powershell
@@ -227,6 +233,45 @@ llm-toolkit statusbar --watch --interval 5
 
 `statusbar` imprime una línea compacta, por ejemplo `CTX 73.9% est | WARNING | Guard CRITICAL | Env OK`. El contexto se estima desde el último `token_count` de `~\.codex\sessions`, usando `last_token_usage.input_tokens / model_context_window`; no scrapea ni envía `/status`.
 
+### `llm-toolkit workbench`
+
+LLM Toolkit Workbench es una app/launcher de Windows 10/11 para trabajar con Codex + PowerShell + `llm-toolkit`.
+
+No reemplaza Codex y en esta primera versión no incrusta terminales reales dentro de la app. Centraliza el flujo para seleccionar un proyecto, ver estado útil, inicializar Toolkit, correr doctor/guard/statusbar y abrir procesos externos.
+
+Funciones principales:
+
+- recuerda último proyecto y proyectos recientes en `%APPDATA%\llm-toolkit\workbench.json`;
+- distingue proyecto nuevo, carpeta vacía y proyecto existente;
+- avisa si Git no está detectado, pero no ejecuta `git init` automáticamente;
+- inicializa Toolkit con `llm-toolkit init --rtk --caveman lite --codeburn` respetando el nivel Caveman elegido;
+- abre Codex en una PowerShell/Windows Terminal del proyecto, ejecutando antes `llm-toolkit guard check --write-alert`;
+- abre PowerShell manual con `.venv\Scripts` antepuesto al `PATH` si existe y muestra comandos recomendados;
+- abre un Workbench externo de tres paneles con Codex, PowerShell manual y `llm-toolkit statusbar --watch --interval 5`;
+- si `wt.exe` no existe, usa PowerShell separadas.
+
+Uso:
+
+```powershell
+llm-toolkit workbench
+llm-toolkit workbench --project "C:\ruta\al\proyecto"
+llm-toolkit workbench --no-init --no-guard --no-statusbar
+llm-toolkit workbench --caveman-level full
+```
+
+PySide6 es opcional. Para desarrollo:
+
+```powershell
+python -m pip install -e ".[dev,gui]"
+```
+
+Si se ejecuta sin PySide6, el CLI informa cómo instalarlo:
+
+```powershell
+python -m pip install -e .[gui]
+pipx inject llm-toolkit PySide6
+```
+
 ### `llm-toolkit doctor` Y `llm-toolkit status`
 
 Revisan el estado del proyecto, las integraciones disponibles, el bloque CodeBurn en `AGENTS.md` y comandos recomendados.
@@ -262,6 +307,18 @@ Instalar en modo editable con dependencias de desarrollo:
 
 ```powershell
 python -m pip install -e ".[dev]"
+```
+
+Para desarrollar la GUI:
+
+```powershell
+python -m pip install -e ".[dev,gui]"
+```
+
+Comando preparado para empaquetado futuro con PyInstaller, sin ejecutarlo en esta etapa:
+
+```powershell
+python -m PyInstaller --name "LLM Toolkit Workbench" --windowed --collect-all PySide6 tools\workbench_entry.py
 ```
 
 Ejecutar tests:

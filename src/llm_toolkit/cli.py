@@ -24,6 +24,7 @@ from .guard import check_guard, read_guard_status, start_guard, stop_guard
 from .rtk import configure_local_tracking, install_rtk_windows, recommended_commands
 from .stale import check_stale, mark_clean
 from .statusbar import build_statusbar_line
+from .workbench_launcher import launch_workbench
 
 
 app = typer.Typer(
@@ -247,6 +248,35 @@ def statusbar_command(
             time.sleep(interval)
     except KeyboardInterrupt:
         return
+
+
+@app.command("workbench")
+def workbench_command(
+    project: Path | None = typer.Option(None, "--project", help="Abrir directamente un proyecto."),
+    no_init: bool = typer.Option(False, "--no-init", help="No ejecutar init automático."),
+    no_guard: bool = typer.Option(False, "--no-guard", help="No correr guard check inicial."),
+    caveman_level: str = typer.Option(DEFAULT_LEVEL, "--caveman-level", help="Nivel Caveman: lite, full o ultra."),
+    no_statusbar: bool = typer.Option(False, "--no-statusbar", help="No abrir statusbar en el workbench multipanel."),
+) -> None:
+    """Abre LLM Toolkit Workbench para Windows."""
+    try:
+        level = validate_level(caveman_level)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    try:
+        exit_code = launch_workbench(
+            project=str(project) if project is not None else None,
+            auto_init=not no_init,
+            auto_guard=not no_guard,
+            caveman_level=level,
+            open_statusbar=not no_statusbar,
+        )
+        if exit_code:
+            raise typer.Exit(code=exit_code)
+    except RuntimeError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from exc
 
 
 @app.command("install-rtk")
