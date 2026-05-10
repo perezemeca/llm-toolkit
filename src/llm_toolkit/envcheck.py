@@ -119,10 +119,16 @@ def detect_origin(active_path: str | None) -> str:
     if not active_path:
         return "no encontrado"
     normalized = active_path.replace("\\", "/").lower()
-    if "/pipx/" in normalized or "/pipx/" in normalized or "pipx" in normalized:
-        return "pipx"
-    if "/.venv/" in normalized or normalized.endswith("/.venv/scripts/llm-toolkit.exe"):
+    if "/.venv/scripts/" in normalized:
         return ".venv"
+    if "/pipx/venvs/" in normalized or "/.local/pipx/venvs/" in normalized:
+        return "pipx"
+    if "/.local/bin/" in normalized:
+        return "global user shim"
+    if "/python/scripts/" in normalized:
+        return "global user shim"
+    if "/programs/python/python" in normalized and "/scripts/" in normalized:
+        return "global user shim"
     if "/src/llm_toolkit/" in str(Path(__file__).resolve()).replace("\\", "/").lower():
         repo_root = str(Path(__file__).resolve().parents[2]).replace("\\", "/").lower()
         if normalized.startswith(repo_root):
