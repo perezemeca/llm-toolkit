@@ -62,4 +62,18 @@ Si existe alerta `WARNING` o `CRITICAL`, aplicar regla de contexto fresco:
 - usar solo el objetivo actual, archivos relevantes, salida fallida y restricciones vigentes;
 - restatar el contexto de trabajo en menos de 10 bullets antes de editar.
 
+Si la alerta indica `Environment STALE`:
+
+- no asumir que hooks/config/skills actuales ya fueron cargados por Codex;
+- reiniciar Codex si cambiaron `.codex/`, `AGENTS.md` o skills;
+- reiniciar PowerShell si hubo reinstalación con pipx, cambios de PATH o cambio de versión;
+- verificar con `llm-toolkit env`.
+
+Después de reinstalar `llm-toolkit` con `pipx install --force`, las PowerShell abiertas pueden seguir usando una versión/ruta vieja. Cerrar y abrir terminal, o verificar con:
+
+```powershell
+where.exe llm-toolkit
+llm-toolkit env
+```
+
 CodeBurn Guard no bloquea tareas funcionales si CodeBurn falla o no está instalado.

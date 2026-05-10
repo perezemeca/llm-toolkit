@@ -4,6 +4,7 @@ from typer.testing import CliRunner
 
 from llm_toolkit import guard
 from llm_toolkit.cli import app
+from llm_toolkit.stale import StaleReport
 
 
 runner = CliRunner()
@@ -49,6 +50,53 @@ def test_guard_check_write_alert_crea_codex_alert(tmp_path: Path, monkeypatch) -
     alert = tmp_path / ".llm-toolkit" / "alerts" / "CODEX_ALERT.md"
     assert alert.exists()
     assert "Regla de contexto fresco" in alert.read_text(encoding="utf-8")
+
+
+def test_guard_check_incluye_environment(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(guard, "run_codeburn_optimize", lambda timeout=30: (False, None, "CodeBurn no está instalado."))
+    monkeypatch.setattr(
+        guard,
+        "check_stale",
+        lambda root: StaleReport("OK", "sin cambios", (), "OK", "Env OK", "fingerprint", None),
+    )
+
+    result = invoke_in_path(tmp_path, ["guard", "check"], monkeypatch)
+
+    state = (tmp_path / ".llm-toolkit" / "state" / "context_health.json").read_text(encoding="utf-8")
+    assert result.exit_code == 0
+    assert '"environment"' in state
+    assert '"level": "OK"' in state
+
+
+def test_guard_write_alert_genera_environment_stale(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(guard, "run_codeburn_optimize", lambda timeout=30: (False, None, "CodeBurn no está instalado."))
+    monkeypatch.setattr(
+        guard,
+        "check_stale",
+        lambda root: StaleReport("STALE", "cambió AGENTS.md", ("AGENTS.md",), "OK", "Env OK", "fingerprint", None),
+    )
+
+    result = invoke_in_path(tmp_path, ["guard", "check", "--write-alert"], monkeypatch)
+
+    alert = tmp_path / ".llm-toolkit" / "alerts" / "CODEX_ALERT.md"
+    assert result.exit_code == 0
+    assert alert.exists()
+    assert "Environment STALE" in alert.read_text(encoding="utf-8")
+
+
+def test_guard_no_bloquea_si_envcheck_falla(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(guard, "run_codeburn_optimize", lambda timeout=30: (False, None, "CodeBurn no está instalado."))
+
+    def fail(root):
+        raise RuntimeError("falló env")
+
+    monkeypatch.setattr(guard, "check_stale", fail)
+
+    result = invoke_in_path(tmp_path, ["guard", "check"], monkeypatch)
+
+    assert result.exit_code == 0
+    state = (tmp_path / ".llm-toolkit" / "state" / "context_health.json").read_text(encoding="utf-8")
+    assert "Chequeo de entorno no disponible" in state
 
 
 def test_guard_excluye_llm_toolkit(tmp_path: Path) -> None:

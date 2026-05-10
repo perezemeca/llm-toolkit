@@ -20,3 +20,24 @@ def test_help_global_sigue_funcionando() -> None:
     assert result.exit_code == 0
     assert "Usage:" in result.output
     assert "doctor" in result.output
+
+
+def test_env_help() -> None:
+    result = runner.invoke(app, ["env", "--help"])
+
+    assert result.exit_code == 0
+    assert "Diagnostica" in result.output
+
+
+def test_stale_help() -> None:
+    result = runner.invoke(app, ["stale", "--help"])
+
+    assert result.exit_code == 0
+    assert "stale" in result.output.lower()
+
+
+def test_statusbar_help() -> None:
+    result = runner.invoke(app, ["statusbar", "--help"])
+
+    assert result.exit_code == 0
+    assert "--watch" in result.output

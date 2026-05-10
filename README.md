@@ -42,6 +42,8 @@ Revisar estado:
 ```powershell
 llm-toolkit doctor
 llm-toolkit status
+llm-toolkit env
+llm-toolkit statusbar
 ```
 
 El init instala hooks de Codex en `.codex/`, por lo que los checkpoints de Guard quedan automatizados para sesiones de Codex. El comando manual queda disponible para diagnóstico:
@@ -72,6 +74,13 @@ llm-toolkit guard check --write-alert
 ```
 
 Si aparece `.llm-toolkit\alerts\CODEX_ALERT.md`, revisar la alerta antes de continuar con más contexto.
+
+Si la alerta dice `Environment STALE`, reiniciar Codex si cambiaron `.codex/`, `AGENTS.md` o skills, y reiniciar PowerShell si hubo reinstalación con `pipx`, cambios de PATH o cambio de versión. Verificar con:
+
+```powershell
+where.exe llm-toolkit
+llm-toolkit env
+```
 
 ## Flujo Recomendado En Proyecto Flutter/Dart
 
@@ -199,6 +208,25 @@ Los hooks versionados viven en:
 
 Guard no bloquea tareas si CodeBurn falla, no está instalado o no tiene datos locales.
 
+### `llm-toolkit env`, `stale` Y `statusbar`
+
+Diagnóstico para trabajar con varias PowerShell y sesiones Codex abiertas:
+
+```powershell
+llm-toolkit env
+llm-toolkit stale status
+llm-toolkit stale check
+llm-toolkit stale mark-clean
+llm-toolkit statusbar
+llm-toolkit statusbar --watch --interval 5
+```
+
+`env` muestra rutas y versiones activas de `llm-toolkit`, Codex, RTK y CodeBurn, detectando múltiples rutas o versiones viejas.
+
+`stale mark-clean` guarda un fingerprint de `.codex/`, `AGENTS.md`, skills y código local del toolkit. `stale check/status` advierten si esos archivos o la ruta/versión activa cambiaron después del fingerprint.
+
+`statusbar` imprime una línea compacta, por ejemplo `CTX 73.9% est | WARNING | Guard CRITICAL | Env OK`. El contexto se estima desde el último `token_count` de `~\.codex\sessions`, usando `last_token_usage.input_tokens / model_context_window`; no scrapea ni envía `/status`.
+
 ### `llm-toolkit doctor` Y `llm-toolkit status`
 
 Revisan el estado del proyecto, las integraciones disponibles, el bloque CodeBurn en `AGENTS.md` y comandos recomendados.
@@ -222,6 +250,9 @@ llm-toolkit status
 - CodeBurn no valida funcionalidad del código.
 - Guard se activa automáticamente mediante hooks de Codex después de `llm-toolkit init --codeburn`.
 - Guard no bloquea tareas si falla CodeBurn.
+- Leer `.llm-toolkit\alerts\CODEX_ALERT.md` antes de editar si existe.
+- Si la alerta indica `Environment STALE`, no asumir que Codex ya cargó hooks/config/skills actuales.
+- Después de `pipx install --force`, cerrar y abrir PowerShell o validar con `where.exe llm-toolkit` y `llm-toolkit env`.
 - Versionar `.codex/` cuando contiene hooks/config del proyecto.
 - No versionar `.rtk/` ni `.llm-toolkit/`.
 

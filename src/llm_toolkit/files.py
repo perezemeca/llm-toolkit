@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import os
+import time
+from contextlib import contextmanager
 from pathlib import Path
+from uuid import uuid4
 
 
 RTK_BEGIN = "<!-- LLM-TOOLKIT:RTK:BEGIN -->"
@@ -16,8 +20,63 @@ def read_text(path: Path) -> str:
 def write_text(path: Path, content: str) -> None:
     if read_text(path) == content:
         return
+    atomic_write_text(path, content)
+
+
+@contextmanager
+def file_lock(path: Path, *, timeout: float = 1.0, poll_interval: float = 0.05):
+    lock_path = path.parent / ".lock"
+    deadline = time.monotonic() + timeout
+    acquired = False
+    while time.monotonic() < deadline:
+        try:
+            lock_path.mkdir(parents=True, exist_ok=False)
+            acquired = True
+            break
+        except FileExistsError:
+            time.sleep(poll_interval)
+        except OSError:
+            break
+    try:
+        yield acquired
+    finally:
+        if acquired:
+            try:
+                lock_path.rmdir()
+            except OSError:
+                pass
+
+
+def atomic_write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8", newline="\n")
+    tmp_path = path.with_name(f".{path.name}.{os.getpid()}.{uuid4().hex}.tmp")
+    try:
+        with file_lock(path):
+            tmp_path.write_text(content, encoding="utf-8", newline="\n")
+            os.replace(tmp_path, path)
+    finally:
+        try:
+            if tmp_path.exists():
+                tmp_path.unlink()
+        except OSError:
+            pass
+
+
+def append_line_atomic(path: Path, line: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_name(f".{path.name}.{os.getpid()}.{uuid4().hex}.tmp")
+    with file_lock(path):
+        content = read_text(path)
+        suffix = "" if not content or content.endswith("\n") else "\n"
+        try:
+            tmp_path.write_text(f"{content}{suffix}{line}\n", encoding="utf-8", newline="\n")
+            os.replace(tmp_path, path)
+        finally:
+            try:
+                if tmp_path.exists():
+                    tmp_path.unlink()
+            except OSError:
+                pass
 
 
 def append_unique_line(path: Path, line: str) -> bool:

@@ -18,9 +18,12 @@ from .codeburn import (
 )
 from .detect import detect_project
 from .doctor import DoctorReport, build_report
+from .envcheck import EnvReport, check_environment
 from .files import ensure_rtk_excluded, upsert_agents_block, write_text
 from .guard import check_guard, read_guard_status, start_guard, stop_guard
 from .rtk import configure_local_tracking, install_rtk_windows, recommended_commands
+from .stale import check_stale, mark_clean
+from .statusbar import build_statusbar_line
 
 
 app = typer.Typer(
@@ -30,6 +33,8 @@ app = typer.Typer(
 )
 guard_app = typer.Typer(help="Guard liviano de CodeBurn para checkpoints de Codex.", no_args_is_help=True)
 app.add_typer(guard_app, name="guard")
+stale_app = typer.Typer(help="Detecta sesiones stale de Codex/PowerShell.", no_args_is_help=True)
+app.add_typer(stale_app, name="stale")
 console = Console()
 
 
@@ -87,7 +92,7 @@ def _print_report(report: DoctorReport, title: str = "llm-toolkit doctor") -> No
     table.add_column("Estado")
     table.add_column("Detalle")
     for check in report.checks:
-        table.add_row(check.name, "OK" if check.ok else "FALTA", check.detail)
+        table.add_row(check.name, check.status or ("OK" if check.ok else "FALTA"), check.detail)
     console.print(table)
     stacks = ", ".join(report.detection.stacks) if report.detection.stacks else "unknown"
     console.print(f"Git: {'detectado' if report.detection.has_git else 'no detectado'}")
@@ -96,6 +101,27 @@ def _print_report(report: DoctorReport, title: str = "llm-toolkit doctor") -> No
     _print_command_notes(report.command_notes)
     _print_caveman_recommendations(report)
     _print_codeburn_recommendations(report)
+    if report.env.level == "STALE" or report.stale.level == "STALE":
+        console.print("[yellow]Recomendación: reiniciar PowerShell/Codex y ejecutar [cyan]llm-toolkit env[/cyan].[/yellow]")
+
+
+def _print_env_report(report: EnvReport) -> None:
+    table = Table(title="llm-toolkit env")
+    table.add_column("Ejecutable")
+    table.add_column("Ruta activa")
+    table.add_column("Versión")
+    table.add_column("Rutas")
+    for executable in report.executables:
+        table.add_row(
+            executable.name,
+            executable.active_path or "n/d",
+            executable.version or executable.error or "n/d",
+            str(len(executable.paths)),
+        )
+    console.print(table)
+    console.print(f"Origen llm-toolkit: [cyan]{report.origin}[/cyan]")
+    console.print(f"Versión esperada: [cyan]{report.expected_version or 'n/d'}[/cyan]")
+    console.print(f"Estado final: [bold]{'Env ' + report.level}[/bold] - {report.message}")
 
 
 def _version_callback(value: bool) -> None:
@@ -195,6 +221,32 @@ def doctor_command() -> None:
 def status_command() -> None:
     """Muestra el estado de llm-toolkit en el proyecto actual."""
     _print_report(build_report(Path.cwd()), title="llm-toolkit status")
+
+
+@app.command("env")
+def env_command() -> None:
+    """Diagnostica rutas, versiones y posible stale de ejecutables."""
+    _print_env_report(check_environment(Path.cwd()))
+
+
+@app.command("statusbar")
+def statusbar_command(
+    watch: bool = typer.Option(False, "--watch", help="Actualizar la línea de estado en bucle."),
+    interval: int = typer.Option(5, "--interval", min=1, help="Intervalo de actualización para --watch."),
+    no_rtk: bool = typer.Option(False, "--no-rtk", help="No consultar rtk gain."),
+) -> None:
+    """Imprime una línea compacta con contexto, Guard y entorno."""
+    if not watch:
+        console.print(build_statusbar_line(Path.cwd(), include_rtk=not no_rtk))
+        return
+    import time
+
+    try:
+        while True:
+            console.print(build_statusbar_line(Path.cwd(), include_rtk=not no_rtk))
+            time.sleep(interval)
+    except KeyboardInterrupt:
+        return
 
 
 @app.command("install-rtk")
@@ -308,3 +360,32 @@ def guard_status_command() -> None:
     """Muestra el estado local de CodeBurn Guard."""
     status = read_guard_status(Path.cwd())
     console.print_json(data=status)
+
+
+@stale_app.command("check")
+def stale_check_command() -> None:
+    """Compara la sesión actual contra el último fingerprint marcado."""
+    result = check_stale(Path.cwd())
+    console.print(f"Stale session: [bold]{result.level}[/bold] - {result.message}")
+    if result.changed_files:
+        console.print("Archivos sensibles cambiados:")
+        for path in result.changed_files:
+            console.print(f"  [cyan]{path}[/cyan]")
+    if result.recommendation:
+        console.print(f"[yellow]{result.recommendation}[/yellow]")
+
+
+@stale_app.command("mark-clean")
+def stale_mark_clean_command() -> None:
+    """Guarda el fingerprint actual como estado limpio."""
+    path = mark_clean(Path.cwd())
+    console.print(f"[green]Fingerprint guardado.[/green] {path}")
+
+
+@stale_app.command("status")
+def stale_status_command() -> None:
+    """Muestra resumen de stale session."""
+    result = check_stale(Path.cwd())
+    console.print(f"Stale session: [bold]{result.level}[/bold] - {result.message}")
+    console.print(f"Fingerprint: [cyan]{result.fingerprint_path}[/cyan]")
+    console.print(f"Env: [cyan]{result.env_level}[/cyan] - {result.env_message}")

@@ -8,8 +8,10 @@ from .caveman import CavemanStatus, get_status as get_caveman_status, recommende
 from .codex_hooks import CodexHookStatus, get_codex_hook_status
 from .codeburn import CodeBurnStatus, codeburn_status, recommended_cli_commands as recommended_codeburn_commands
 from .detect import ProjectDetection, detect_project, has_pubspec
+from .envcheck import EnvReport, check_environment
 from .files import read_text, skill_has_valid_frontmatter
 from .rtk import recommended_commands, recommended_notes, rtk_in_path
+from .stale import StaleReport, check_stale
 
 
 @dataclass(frozen=True)
@@ -17,6 +19,7 @@ class Check:
     name: str
     ok: bool
     detail: str
+    status: str | None = None
 
 
 @dataclass(frozen=True)
@@ -31,6 +34,8 @@ class DoctorReport:
     codeburn: CodeBurnStatus
     codeburn_commands: tuple[str, ...]
     codex_hooks: CodexHookStatus
+    env: EnvReport
+    stale: StaleReport
 
     @property
     def ok(self) -> bool:
@@ -50,7 +55,26 @@ def build_report(root: Path | str = ".") -> DoctorReport:
     caveman = get_caveman_status(project_root)
     codeburn = codeburn_status(project_root)
     codex_hooks = get_codex_hook_status(project_root)
+    env = check_environment(project_root)
+    stale = check_stale(project_root)
     checks = (
+        Check(
+            "Env check",
+            env.level != "STALE",
+            f"{env.level}: {env.message}; ruta activa: {env.active_path or 'n/d'}",
+            env.level,
+        ),
+        Check(
+            "Stale session",
+            stale.level != "STALE",
+            f"{stale.level}: {stale.message}",
+            stale.level,
+        ),
+        Check(
+            "múltiples rutas llm-toolkit",
+            not env.multiple_llm_toolkit_paths,
+            "sí" if env.multiple_llm_toolkit_paths else "no",
+        ),
         Check("rtk en PATH", rtk_in_path(), "rtk disponible" if rtk_in_path() else "rtk no encontrado en PATH"),
         Check("AGENTS.md", agents.exists(), "existe" if agents.exists() else "no existe"),
         Check("skill rtk-codex", skill.exists(), "existe" if skill.exists() else "no existe"),
@@ -157,4 +181,6 @@ def build_report(root: Path | str = ".") -> DoctorReport:
         codeburn=codeburn,
         codeburn_commands=tuple(recommended_codeburn_commands()),
         codex_hooks=codex_hooks,
+        env=env,
+        stale=stale,
     )

@@ -10,6 +10,7 @@ from typing import Literal
 
 from .codeburn import SUBPROCESS_TEXT_KWARGS, detect_codeburn, make_console_safe
 from .files import append_unique_line, write_text
+from .stale import check_stale
 
 
 GuardLevel = Literal["HEALTHY", "UNKNOWN", "WARNING", "CRITICAL"]
@@ -28,6 +29,7 @@ class GuardResult:
     returncode: int | None
     checked_at: str
     summary: str
+    environment: dict[str, object] | None = None
     alert_path: str | None = None
 
 
@@ -88,6 +90,20 @@ def build_context_health(result: GuardResult) -> str:
 
 
 def build_alert(result: GuardResult) -> str:
+    environment = result.environment or {}
+    if environment.get("level") == "STALE":
+        return (
+            "# CODEX ALERT - Environment STALE\n\n"
+            "Se detectó que la configuración o versión activa puede no coincidir con la sesión actual.\n\n"
+            "Acciones:\n\n"
+            "1. Reiniciar Codex si cambiaron `.codex/`, `AGENTS.md` o skills.\n"
+            "2. Reiniciar PowerShell si se reinstaló `llm-toolkit`, RTK o CodeBurn.\n"
+            "3. Verificar:\n"
+            "   - `llm-toolkit env`\n"
+            "   - `llm-toolkit doctor`\n"
+            "   - `where.exe llm-toolkit`\n\n"
+            f"Detalle: {environment.get('message', 'Environment STALE')}\n"
+        )
     return (
         "# CODEX ALERT\n\n"
         f"Estado: {result.level}\n\n"
@@ -112,7 +128,8 @@ def write_context_health(root: Path, result: GuardResult) -> Path:
 
 
 def write_alert(root: Path, result: GuardResult) -> Path | None:
-    if result.level not in ("WARNING", "CRITICAL"):
+    environment = result.environment or {}
+    if result.level not in ("WARNING", "CRITICAL") and environment.get("level") != "STALE":
         return None
     path = root / ALERT_PATH
     write_text(path, build_alert(result))
@@ -124,6 +141,22 @@ def check_guard(root: Path | str = ".", *, timeout: int = 30, write_alert_file: 
     ensure_guard_excluded(project_root)
     codeburn_available, returncode, output = run_codeburn_optimize(timeout=timeout)
     level, message = classify_codeburn_output(output, codeburn_available, returncode)
+    environment: dict[str, object]
+    try:
+        stale = check_stale(project_root)
+        environment = {
+            "level": stale.level,
+            "message": stale.message,
+            "env_level": stale.env_level,
+            "env_message": stale.env_message,
+            "changed_files": list(stale.changed_files),
+            "recommendation": stale.recommendation,
+        }
+    except Exception as exc:
+        environment = {
+            "level": "UNKNOWN",
+            "message": f"Chequeo de entorno no disponible: {exc}",
+        }
     result = GuardResult(
         level=level,
         message=message,
@@ -131,9 +164,10 @@ def check_guard(root: Path | str = ".", *, timeout: int = 30, write_alert_file: 
         returncode=returncode,
         checked_at=utc_now(),
         summary=output,
+        environment=environment,
     )
     write_context_health(project_root, result)
-    alert = write_alert(project_root, result) if write_alert_file else None
+    alert = write_alert(project_root, result) if write_alert_file or environment.get("level") == "STALE" else None
     if alert is not None:
         result = GuardResult(**{**asdict(result), "alert_path": str(alert)})
         write_context_health(project_root, result)

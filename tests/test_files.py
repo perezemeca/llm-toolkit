@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from llm_toolkit.files import RTK_BEGIN, ensure_rtk_excluded, skill_has_valid_frontmatter, upsert_agents_block, write_text
+from llm_toolkit.files import RTK_BEGIN, atomic_write_text, ensure_rtk_excluded, skill_has_valid_frontmatter, upsert_agents_block, write_text
 
 
 def test_insertar_bloque_rtk_sin_duplicarlo(tmp_path: Path) -> None:
@@ -50,3 +50,28 @@ def test_excluir_rtk_sin_git_en_gitignore(tmp_path: Path) -> None:
 
     assert target == tmp_path / ".gitignore"
     assert ".rtk/" in target.read_text(encoding="utf-8")
+
+
+def test_atomic_write_crea_archivo_final(tmp_path: Path) -> None:
+    target = tmp_path / ".llm-toolkit" / "state" / "context_health.json"
+
+    atomic_write_text(target, "{}\n")
+
+    assert target.read_text(encoding="utf-8") == "{}\n"
+
+
+def test_atomic_write_reemplaza_contenido(tmp_path: Path) -> None:
+    target = tmp_path / "state.json"
+    atomic_write_text(target, "viejo\n")
+
+    atomic_write_text(target, "nuevo\n")
+
+    assert target.read_text(encoding="utf-8") == "nuevo\n"
+
+
+def test_atomic_write_no_deja_tmp_si_no_hay_error(tmp_path: Path) -> None:
+    target = tmp_path / "state.json"
+
+    atomic_write_text(target, "ok\n")
+
+    assert not list(tmp_path.glob("*.tmp"))

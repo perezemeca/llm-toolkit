@@ -43,8 +43,19 @@ def log(message: str) -> None:
     path = state_dir() / "logs" / "guard_hook.log"
     path.parent.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).isoformat()
-    with path.open("a", encoding="utf-8", newline="\n") as handle:
-        handle.write(f"{stamp} {message}\n")
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    previous = ""
+    try:
+        if path.exists():
+            previous = path.read_text(encoding="utf-8", errors="replace")
+        tmp.write_text(f"{previous}{stamp} {message}\n", encoding="utf-8", newline="\n")
+        os.replace(tmp, path)
+    finally:
+        try:
+            if tmp.exists():
+                tmp.unlink()
+        except OSError:
+            pass
 
 
 def read_payload() -> dict:
@@ -92,7 +103,16 @@ def write_hook_state(event: str, status: str, detail: str = "") -> None:
         "detail": detail,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+        os.replace(tmp, path)
+    finally:
+        try:
+            if tmp.exists():
+                tmp.unlink()
+        except OSError:
+            pass
 
 
 def run_guard_check(timeout: int = 30) -> None:
