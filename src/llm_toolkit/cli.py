@@ -92,13 +92,23 @@ def _print_report(report: DoctorReport, title: str = "llm-toolkit doctor") -> No
     _print_codeburn_recommendations(report)
 
 
-@app.callback()
-def main(
-    version: bool = typer.Option(False, "--version", help="Mostrar la versión y salir."),
-) -> None:
-    if version:
+def _version_callback(value: bool) -> None:
+    if value:
         console.print(f"llm-toolkit {__version__}")
         raise typer.Exit()
+
+
+@app.callback()
+def main(
+    version: bool = typer.Option(
+        False,
+        "--version",
+        help="Mostrar la versión y salir.",
+        callback=_version_callback,
+        is_eager=True,
+    ),
+) -> None:
+    return None
 
 
 @app.command("init")
