@@ -2,6 +2,7 @@
 
 `llm-toolkit` es un CLI para preparar proyectos de programación con Codex y herramientas auxiliares de control de contexto, salidas y costos.
 
+<<<<<<< HEAD
 El proyecto integra RTK, Caveman, CodeBurn y CodeBurn Guard. Estas herramientas están pensadas para trabajo de programación con Codex.
 
 ## Módulos
@@ -218,7 +219,7 @@ llm-toolkit status
 - Usar `rtk git ls-files` para listar archivos versionados.
 - Usar RTK para compactar salidas de comandos.
 - Usar Caveman `lite` para reportes compactos de programación.
-- Mantener Caveman fuera de tesis, documentación académica, FEA, simulación, cinemática y explicaciones técnicas extensas.
+- Usar Caveman solo para reportes compactos de programación con Codex cuando se busque reducir tokens.
 - CodeBurn no valida funcionalidad del código.
 - Guard se activa automáticamente mediante hooks de Codex después de `llm-toolkit init --codeburn`.
 - Guard no bloquea tareas si falla CodeBurn.

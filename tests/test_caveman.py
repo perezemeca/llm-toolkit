@@ -91,7 +91,7 @@ def test_doctor_sugiere_init_caveman_si_no_esta_configurado(tmp_path: Path, monk
     assert "Comandos recomendados - Caveman" in result.output
     assert "Caveman no configurado" in result.output
     assert "llm-toolkit init --caveman lite" in result.output
-    assert "No usar para tesis" in result.output
+    assert "Caveman aplica únicamente al modo compacto de programación con Codex" in result.output
 
 
 def test_init_rtk_caveman_mantiene_ambos_bloques(tmp_path: Path, monkeypatch) -> None:

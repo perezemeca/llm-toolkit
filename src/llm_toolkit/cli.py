@@ -43,6 +43,11 @@ def _print_commands(title: str, commands: list[str] | tuple[str, ...]) -> None:
         console.print(f"  [cyan]{command}[/cyan]")
 
 
+def _print_command_notes(notes: list[str] | tuple[str, ...]) -> None:
+    for note in notes:
+        console.print(f"  {note}")
+
+
 def _print_caveman_recommendations(report: DoctorReport) -> None:
     console.print("[bold]Comandos recomendados - Caveman[/bold]")
     if report.caveman.configured:
@@ -61,7 +66,7 @@ def _print_caveman_recommendations(report: DoctorReport) -> None:
     console.print("  Nivel recomendado por defecto: [cyan]lite[/cyan]")
     console.print("  Usar solo para reportes compactos de programación con Codex.")
     console.print("  Preservar rutas, comandos, errores exactos, nombres de tests y resultados.")
-    console.print("  No usar para tesis, FEA, simulación, cinemática ni redacción académica.")
+    console.print("  Caveman aplica únicamente al modo compacto de programación con Codex.")
 
 
 def _print_codeburn_recommendations(report: DoctorReport) -> None:
@@ -88,6 +93,7 @@ def _print_report(report: DoctorReport, title: str = "llm-toolkit doctor") -> No
     console.print(f"Git: {'detectado' if report.detection.has_git else 'no detectado'}")
     console.print(f"Stack: {stacks}")
     _print_commands("Comandos recomendados - RTK", report.commands)
+    _print_command_notes(report.command_notes)
     _print_caveman_recommendations(report)
     _print_codeburn_recommendations(report)
 

@@ -26,7 +26,7 @@ from pathlib import Path
 
 
 TEST_COMMAND_RE = re.compile(
-    r"(^|\s)(pytest|python\s+-m\s+pytest|npm\s+test|pnpm\s+test|cargo\s+test|dotnet\s+test|go\s+test)(\s|$)",
+    r"(^|\s)(pytest|python\s+-m\s+pytest|npm\s+test|pnpm\s+test|cargo\s+test|dotnet\s+test|go\s+test|flutter\s+test|dart\s+test|flutter\s+analyze|dart\s+analyze)(\s|$)",
     re.IGNORECASE,
 )
 

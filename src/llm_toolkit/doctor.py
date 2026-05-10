@@ -1,14 +1,15 @@
 from __future__ import annotations
 
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
 from .caveman import CavemanStatus, get_status as get_caveman_status, recommended_cli_commands, recommended_codex_usage
 from .codex_hooks import CodexHookStatus, get_codex_hook_status
 from .codeburn import CodeBurnStatus, codeburn_status, recommended_cli_commands as recommended_codeburn_commands
-from .detect import ProjectDetection, detect_project
+from .detect import ProjectDetection, detect_project, has_pubspec
 from .files import read_text, skill_has_valid_frontmatter
-from .rtk import recommended_commands, rtk_in_path
+from .rtk import recommended_commands, recommended_notes, rtk_in_path
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,7 @@ class DoctorReport:
     detection: ProjectDetection
     checks: tuple[Check, ...]
     commands: tuple[str, ...]
+    command_notes: tuple[str, ...]
     caveman: CavemanStatus
     caveman_commands: tuple[str, ...]
     caveman_codex_usage: tuple[str, ...]
@@ -60,6 +62,21 @@ def build_report(root: Path | str = ".") -> DoctorReport:
         Check(".rtk/", (project_root / ".rtk").exists(), "existe" if (project_root / ".rtk").exists() else "no existe"),
         Check("exclusión .rtk/", _rtk_excluded(project_root, detection.has_git), "configurada" if _rtk_excluded(project_root, detection.has_git) else "no configurada"),
         Check("Git", detection.has_git, "detectado" if detection.has_git else "no detectado"),
+        Check(
+            "pubspec.yaml",
+            has_pubspec(project_root),
+            "existe" if has_pubspec(project_root) else "no existe",
+        ),
+        Check(
+            "Flutter en PATH",
+            shutil.which("flutter") is not None,
+            "detectado" if shutil.which("flutter") is not None else "no encontrado",
+        ),
+        Check(
+            "Dart en PATH",
+            shutil.which("dart") is not None,
+            "detectado" if shutil.which("dart") is not None else "no encontrado",
+        ),
         Check("Caveman configurado", caveman.configured, "sí" if caveman.configured else "no"),
         Check("skill caveman-codex", caveman.skill_exists, "existe" if caveman.skill_exists else "no existe"),
         Check(
@@ -133,6 +150,7 @@ def build_report(root: Path | str = ".") -> DoctorReport:
         detection=detection,
         checks=checks,
         commands=tuple(recommended_commands(detection.stacks, detection.has_git)),
+        command_notes=tuple(recommended_notes(detection.stacks)),
         caveman=caveman,
         caveman_commands=tuple(recommended_cli_commands(caveman)),
         caveman_codex_usage=tuple(recommended_codex_usage()),

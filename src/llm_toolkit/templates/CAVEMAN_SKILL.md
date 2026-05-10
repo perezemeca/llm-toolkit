@@ -22,11 +22,6 @@ Usar Caveman solo para reportes de programación con Codex. No reemplaza RTK: RT
 - resultados de tests;
 - riesgos técnicos.
 
-## No usar para
+## Alcance
 
-- tesis;
-- documentación académica;
-- FEA;
-- simulación;
-- cinemática;
-- explicaciones técnicas extensas.
+Caveman aplica únicamente al modo compacto de programación con Codex.

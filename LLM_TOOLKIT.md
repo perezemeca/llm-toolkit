@@ -14,7 +14,7 @@ Este repositorio contiene el CLI `llm-toolkit`.
 
 Los archivos que genera `llm-toolkit init --rtk` deben ser idempotentes: ejecutar el comando varias veces no debe duplicar bloques ni romper configuraciones existentes.
 
-Los archivos que genera `llm-toolkit init --caveman` también deben ser idempotentes y deben mantener Caveman fuera de tesis, documentación académica, FEA, simulación, cinemática y explicaciones técnicas extensas.
+Los archivos que genera `llm-toolkit init --caveman` también deben ser idempotentes y deben mantener Caveman limitado al modo compacto de programación con Codex.
 
 Los archivos que genera `llm-toolkit init --codeburn` también deben ser idempotentes. CodeBurn no reemplaza RTK ni Caveman: solo aporta métricas y no debe usarse para validar funcionalidad del código.
 

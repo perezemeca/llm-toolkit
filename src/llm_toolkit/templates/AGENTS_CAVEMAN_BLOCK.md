@@ -15,11 +15,4 @@ Reportes compactos:
 - riesgos;
 - próximos pasos.
 
-No usar Caveman para:
-
-- tesis;
-- documentación académica;
-- FEA;
-- simulación;
-- cinemática;
-- explicaciones técnicas extensas.
+Caveman aplica únicamente al modo compacto de programación con Codex.
