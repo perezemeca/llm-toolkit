@@ -39,6 +39,40 @@ class LaunchPlan:
         return [self.executable, *self.args]
 
 
+@dataclass(frozen=True)
+class WorkbenchSelectionPlan:
+    project: ProjectState
+    init_args: tuple[str, ...] | None
+    guard_args: tuple[str, ...] | None
+    git_message: str | None
+    terminal_plans: tuple[LaunchPlan, LaunchPlan]
+
+
+WORKBENCH_V2_TOPBAR_CONTROLS = (
+    "Recientes",
+    "Proyecto",
+    "Buscar...",
+    "Diagnóstico",
+    "Alerta",
+    "↻",
+)
+WORKBENCH_V2_MAIN_AREAS = ("Codex CLI", "PowerShell manual")
+WORKBENCH_V2_OBSOLETE_MAIN_CONTROLS = (
+    "Auto init",
+    "Auto guard",
+    "Windows Terminal",
+    "Inicializar Toolkit",
+    "Doctor",
+    "Guard Check",
+    "Statusbar",
+    "Abrir Codex",
+    "Abrir PowerShell",
+    "Abrir Workbench 3 paneles",
+    "Abrir carpeta",
+    "Refrescar estado",
+)
+
+
 def find_executable(name: str) -> str | None:
     return shutil.which(name)
 
@@ -83,6 +117,33 @@ def ensure_project_dir(path: str | os.PathLike[str]) -> Path:
     project = Path(path).expanduser().resolve()
     project.mkdir(parents=True, exist_ok=True)
     return project
+
+
+def init_toolkit_args(caveman_level: str = "lite") -> tuple[str, ...]:
+    return ("init", "--rtk", "--caveman", caveman_level, "--codeburn")
+
+
+def guard_check_args() -> tuple[str, ...]:
+    return ("guard", "check", "--write-alert")
+
+
+def diagnostic_commands() -> tuple[tuple[str, ...], ...]:
+    return (
+        ("doctor",),
+        ("env",),
+        ("stale", "status"),
+        ("statusbar",),
+    )
+
+
+def read_alert_text(project: Path) -> str | None:
+    alert = project / ".llm-toolkit" / "alerts" / "CODEX_ALERT.md"
+    if not alert.exists():
+        return None
+    try:
+        return alert.read_text(encoding="utf-8-sig", errors="replace")
+    except OSError as exc:
+        return f"No se pudo leer la alerta: {exc}"
 
 
 def ps_quote(value: str | os.PathLike[str]) -> str:
@@ -147,6 +208,30 @@ def codex_plan(project: Path) -> LaunchPlan:
 
 def manual_powershell_plan(project: Path, stacks: tuple[str, ...] = ()) -> LaunchPlan:
     return powershell_plan(project, recommended_commands_script(stacks))
+
+
+def two_terminal_plans(project: Path, stacks: tuple[str, ...] = ()) -> tuple[LaunchPlan, LaunchPlan]:
+    return (codex_plan(project), manual_powershell_plan(project, stacks))
+
+
+def build_project_selection_plan(
+    path: str | os.PathLike[str],
+    *,
+    caveman_level: str = "lite",
+    auto_init: bool = True,
+    auto_guard: bool = True,
+) -> WorkbenchSelectionPlan:
+    state = inspect_project(path)
+    git_message = None if state.has_git or not state.exists else "Git no detectado; git init manual"
+    init_args = init_toolkit_args(caveman_level) if auto_init and (not state.exists or state.is_empty or not state.initialized) else None
+    guard_args = guard_check_args() if auto_guard else None
+    return WorkbenchSelectionPlan(
+        project=state,
+        init_args=init_args,
+        guard_args=guard_args,
+        git_message=git_message,
+        terminal_plans=two_terminal_plans(state.path, state.stacks),
+    )
 
 
 def statusbar_plan(project: Path) -> LaunchPlan:

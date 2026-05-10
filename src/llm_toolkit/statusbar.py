@@ -125,10 +125,8 @@ def build_statusbar_line(root: Path | str = ".", *, include_rtk: bool = True, ho
     stale = check_stale(project_root)
     env_level = "STALE" if stale.level == "STALE" or env.level == "STALE" else env.level
     parts = [ctx, ctx_level, f"Guard {guard}", f"Env {env_level}"]
-    if _has_alert(project_root):
-        parts.append("Alert sí")
+    parts.append("Alert sí" if _has_alert(project_root) else "Alert no")
     if include_rtk:
         rtk = _rtk_gain_summary()
-        if rtk:
-            parts.append(rtk)
+        parts.append(rtk or "RTK n/d")
     return " | ".join(parts)

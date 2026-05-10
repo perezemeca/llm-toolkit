@@ -231,24 +231,27 @@ llm-toolkit statusbar --watch --interval 5
 
 `stale mark-clean` guarda un fingerprint de `.codex/`, `AGENTS.md`, skills y código local del toolkit. `stale check/status` advierten si esos archivos o la ruta/versión activa cambiaron después del fingerprint.
 
-`statusbar` imprime una línea compacta, por ejemplo `CTX 73.9% est | WARNING | Guard CRITICAL | Env OK`. El contexto se estima desde el último `token_count` de `~\.codex\sessions`, usando `last_token_usage.input_tokens / model_context_window`; no scrapea ni envía `/status`.
+`statusbar` imprime una línea compacta, por ejemplo `CTX 73.9% est | WARNING | Guard CRITICAL | Env OK | Alert no | RTK n/d`. El contexto se estima desde el último `token_count` de `~\.codex\sessions`, usando `last_token_usage.input_tokens / model_context_window`; no scrapea ni envía `/status`.
 
 ### `llm-toolkit workbench`
 
-LLM Toolkit Workbench es una app/launcher de Windows 10/11 para trabajar con Codex + PowerShell + `llm-toolkit`.
+LLM Toolkit Workbench v2 es una app/launcher de Windows 10/11 para trabajar con Codex + PowerShell + `llm-toolkit`.
 
-No reemplaza Codex y en esta primera versión no incrusta terminales reales dentro de la app. Centraliza el flujo para seleccionar un proyecto, ver estado útil, inicializar Toolkit, correr doctor/guard/statusbar y abrir procesos externos.
+No reemplaza Codex, no es un IDE y no intenta incrustar una terminal avanzada dentro de la app. Centraliza el flujo real: seleccionar un proyecto, inicializar/verificar automáticamente, abrir/preparar Codex y PowerShell, y mostrar una statusbar integrada abajo.
 
 Funciones principales:
 
 - recuerda último proyecto y proyectos recientes en `%APPDATA%\llm-toolkit\workbench.json`;
+- muestra los recientes como desplegable en la barra superior compacta;
 - distingue proyecto nuevo, carpeta vacía y proyecto existente;
 - avisa si Git no está detectado, pero no ejecuta `git init` automáticamente;
-- inicializa Toolkit con `llm-toolkit init --rtk --caveman lite --codeburn` respetando el nivel Caveman elegido;
-- abre Codex en una PowerShell/Windows Terminal del proyecto, ejecutando antes `llm-toolkit guard check --write-alert`;
+- inicializa automáticamente Toolkit con `llm-toolkit init --rtk --caveman lite --codeburn`;
+- ejecuta automáticamente `llm-toolkit guard check --write-alert` al seleccionar proyecto;
+- abre/prepara Codex en una PowerShell del proyecto, ejecutando antes `llm-toolkit guard check --write-alert`;
 - abre PowerShell manual con `.venv\Scripts` antepuesto al `PATH` si existe y muestra comandos recomendados;
-- abre un Workbench externo de tres paneles con Codex, PowerShell manual y `llm-toolkit statusbar --watch --interval 5`;
-- si `wt.exe` no existe, usa PowerShell separadas.
+- muestra solo dos areas centrales: `Codex CLI` y `PowerShell manual`;
+- integra abajo una statusbar de una línea: `CTX ... | Guard ... | Env ... | Alert sí/no | RTK ...`;
+- deja `Diagnóstico` y `Alerta` como herramientas compactas secundarias, sin ocupar espacio permanente.
 
 Uso:
 
@@ -258,6 +261,8 @@ llm-toolkit workbench --project "C:\ruta\al\proyecto"
 llm-toolkit workbench --no-init --no-guard --no-statusbar
 llm-toolkit workbench --caveman-level full
 ```
+
+`--no-init`, `--no-guard` y `--no-statusbar` se conservan por compatibilidad CLI. En la pantalla principal, init, guard y statusbar son comportamiento automático/integrado, no botones grandes.
 
 PySide6 es opcional. Para desarrollo:
 

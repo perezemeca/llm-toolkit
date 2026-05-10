@@ -72,3 +72,43 @@ def test_statusbar_muestra_env_stale(monkeypatch, tmp_path: Path) -> None:
 
     assert "CTX n/d" in line
     assert "Env STALE" in line
+    assert "Alert no" in line
+
+
+def test_statusbar_muestra_alerta_no_y_si(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(statusbar, "read_latest_context_usage", lambda home=None: statusbar.ContextUsage(None, None, None, None))
+    monkeypatch.setattr(statusbar, "_rtk_gain_summary", lambda timeout=3: None)
+    monkeypatch.setattr(
+        statusbar,
+        "check_environment",
+        lambda root: EnvReport("OK", "Env OK", "x", "0.3.0", "0.3.0", "pipx", False, ()),
+    )
+    monkeypatch.setattr(
+        statusbar,
+        "check_stale",
+        lambda root: StaleReport("OK", "ok", (), "OK", "Env OK", "fingerprint", None),
+    )
+
+    assert "Alert no" in statusbar.build_statusbar_line(tmp_path, include_rtk=False, home=tmp_path)
+    alert = tmp_path / ".llm-toolkit" / "alerts" / "CODEX_ALERT.md"
+    alert.parent.mkdir(parents=True)
+    alert.write_text("# alerta\n", encoding="utf-8")
+
+    assert "Alert sí" in statusbar.build_statusbar_line(tmp_path, include_rtk=False, home=tmp_path)
+
+
+def test_statusbar_muestra_rtk_nd_si_no_hay_gain(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(statusbar, "read_latest_context_usage", lambda home=None: statusbar.ContextUsage(None, None, None, None))
+    monkeypatch.setattr(statusbar, "_rtk_gain_summary", lambda timeout=3: None)
+    monkeypatch.setattr(
+        statusbar,
+        "check_environment",
+        lambda root: EnvReport("OK", "Env OK", "x", "0.3.0", "0.3.0", "pipx", False, ()),
+    )
+    monkeypatch.setattr(
+        statusbar,
+        "check_stale",
+        lambda root: StaleReport("OK", "ok", (), "OK", "Env OK", "fingerprint", None),
+    )
+
+    assert "RTK n/d" in statusbar.build_statusbar_line(tmp_path, include_rtk=True, home=tmp_path)

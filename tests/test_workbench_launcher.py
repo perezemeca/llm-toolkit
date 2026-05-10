@@ -5,10 +5,18 @@ from typer.testing import CliRunner
 from llm_toolkit import cli
 from llm_toolkit.cli import app
 from llm_toolkit.workbench_launcher import (
+    WORKBENCH_V2_MAIN_AREAS,
+    WORKBENCH_V2_OBSOLETE_MAIN_CONTROLS,
+    WORKBENCH_V2_TOPBAR_CONTROLS,
+    build_project_selection_plan,
     codex_available,
+    diagnostic_commands,
     inspect_project,
+    init_toolkit_args,
     manual_powershell_plan,
     ps_quote,
+    read_alert_text,
+    two_terminal_plans,
     windows_terminal_three_panel_plan,
     workbench_three_panel_plans,
 )
@@ -116,3 +124,67 @@ def test_workbench_cli_pasa_opciones(monkeypatch, tmp_path: Path) -> None:
     assert calls["auto_guard"] is False
     assert calls["caveman_level"] == "full"
     assert calls["open_statusbar"] is False
+
+
+def test_workbench_v2_layout_expone_topbar_y_dos_areas_principales() -> None:
+    assert WORKBENCH_V2_TOPBAR_CONTROLS == ("Recientes", "Proyecto", "Buscar...", "Diagnóstico", "Alerta", "↻")
+    assert WORKBENCH_V2_MAIN_AREAS == ("Codex CLI", "PowerShell manual")
+    assert "Auto init" in WORKBENCH_V2_OBSOLETE_MAIN_CONTROLS
+    assert "Abrir PowerShell" in WORKBENCH_V2_OBSOLETE_MAIN_CONTROLS
+
+
+def test_seleccion_de_proyecto_dispara_init_guard_y_dos_terminales(tmp_path: Path) -> None:
+    project = tmp_path / "repo"
+    project.mkdir()
+
+    plan = build_project_selection_plan(project, caveman_level="lite")
+
+    assert plan.init_args == init_toolkit_args("lite")
+    assert plan.guard_args == ("guard", "check", "--write-alert")
+    assert plan.git_message == "Git no detectado; git init manual"
+    assert len(plan.terminal_plans) == 2
+    assert "git init" not in " ".join(plan.terminal_plans[0].command())
+
+
+def test_seleccion_no_reinicializa_si_ya_hay_toolkit(tmp_path: Path) -> None:
+    project = tmp_path / "repo"
+    project.mkdir()
+    (project / "AGENTS.md").write_text("# demo\n", encoding="utf-8")
+
+    plan = build_project_selection_plan(project, caveman_level="full")
+
+    assert plan.init_args is None
+    assert plan.guard_args == ("guard", "check", "--write-alert")
+
+
+def test_comandos_codex_y_powershell_usan_ruta_del_proyecto(tmp_path: Path) -> None:
+    project = tmp_path / "repo con espacios"
+    (project / ".venv" / "Scripts").mkdir(parents=True)
+
+    codex, shell = two_terminal_plans(project, ("python",))
+    codex_script = codex.command()[-1]
+    shell_script = shell.command()[-1]
+
+    assert str(project) in codex_script
+    assert str(project) in shell_script
+    assert "llm-toolkit guard check --write-alert" in codex_script
+    assert "codex" in codex_script
+    assert str(project / ".venv" / "Scripts") in shell_script
+    assert "rtk pytest -p no:cacheprovider" in shell_script
+
+
+def test_alerta_se_lee_para_dialogo_interno(tmp_path: Path) -> None:
+    alert = tmp_path / ".llm-toolkit" / "alerts" / "CODEX_ALERT.md"
+    alert.parent.mkdir(parents=True)
+    alert.write_text("# CODEX ALERT\n\nEstado: CRITICAL\n", encoding="utf-8")
+
+    assert read_alert_text(tmp_path) == "# CODEX ALERT\n\nEstado: CRITICAL\n"
+
+
+def test_diagnostico_agrupa_comandos_secundarios() -> None:
+    commands = diagnostic_commands()
+
+    assert ("doctor",) in commands
+    assert ("env",) in commands
+    assert ("stale", "status") in commands
+    assert ("statusbar",) in commands

@@ -116,7 +116,7 @@ Si RTK ejecuta Flutter/Dart como fallback, usar la salida compacta propia de Flu
 
 ## LLM Toolkit Workbench
 
-Workbench es una GUI opcional para Windows 10/11. No reemplaza Codex, no es un IDE y en esta primera versión no incrusta terminales reales. Funciona como lanzador y tablero breve para operar proyectos con Codex, PowerShell manual, RTK, Caveman, CodeBurn Guard, env/stale y statusbar.
+Workbench v2 es una GUI opcional para Windows 10/11. No reemplaza Codex, no es un IDE y no incrusta una terminal avanzada dentro de la app. Funciona como launcher automático para operar proyectos con Codex, PowerShell manual, RTK, Caveman, CodeBurn Guard, env/stale y statusbar integrada.
 
 Instalación de desarrollo:
 
@@ -150,15 +150,22 @@ Debe recordar último proyecto, recientes, nivel Caveman por defecto, preferenci
 
 Comportamiento esperado:
 
+- barra superior compacta en una línea: recientes desplegable, ruta de proyecto, buscar, diagnóstico, alerta y refresco;
+- area central con solo dos paneles: `Codex CLI` y `PowerShell manual`;
+- statusbar inferior integrada con una línea compacta `CTX ... | Guard ... | Env ... | Alert sí/no | RTK ...`;
 - proyecto inexistente: ofrecer crearlo;
 - carpeta vacía: tratarla como proyecto nuevo;
 - carpeta con archivos: tratarla como proyecto existente;
 - sin `.git`: avisar y recomendar `git init`, sin ejecutarlo automáticamente;
-- sin `AGENTS.md`, `.codex` o `.rtk`: ofrecer inicializar Toolkit;
+- sin `AGENTS.md`, `.codex` o `.rtk`: inicializar Toolkit automáticamente;
 - inicialización GUI: `llm-toolkit init --rtk --caveman <nivel> --codeburn`;
-- Codex: abrir PowerShell/Windows Terminal en el proyecto, correr `llm-toolkit guard check --write-alert` y luego `codex`;
+- Guard inicial: `llm-toolkit guard check --write-alert`;
+- Codex: abrir PowerShell en el proyecto, correr `llm-toolkit guard check --write-alert` y luego `codex`;
 - PowerShell manual: anteponer `.venv\Scripts` al `PATH` si existe y mostrar comandos recomendados;
-- tres paneles: Codex, PowerShell manual y `llm-toolkit statusbar --watch --interval 5`; si no existe `wt.exe`, usar tres PowerShell separadas.
+- alerta: si existe `.llm-toolkit\alerts\CODEX_ALERT.md`, mostrar `Alert sí` y abrir su contenido en un diálogo interno;
+- diagnóstico/comandos: mostrar doctor, env, stale status, statusbar y comandos recomendados como herramienta secundaria, no como panel permanente.
+
+No deben volver como controles principales: Auto init, Auto guard, Windows Terminal, Inicializar Toolkit, Doctor, Guard Check, Statusbar, Abrir Codex, Abrir PowerShell, Abrir Workbench 3 paneles, Abrir carpeta ni Refrescar estado como botón grande. Los comandos CLI manuales siguen existiendo.
 
 Comando preparado para empaquetado futuro con PyInstaller, sin ejecutarlo automáticamente:
 
