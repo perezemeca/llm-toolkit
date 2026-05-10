@@ -20,6 +20,15 @@ Los archivos que genera `llm-toolkit init --codeburn` también deben ser idempot
 
 CodeBurn Guard se activa automáticamente mediante hooks de Codex instalados en `.codex/` por `llm-toolkit init --codeburn`. Escribe estado local en `.llm-toolkit/`, no debe versionarse y no debe bloquear tareas funcionales si CodeBurn falla o no está instalado.
 
+`.codex/config.toml` debe usar el feature flag vigente:
+
+```toml
+[features]
+hooks = true
+```
+
+Si existe `codex_hooks = true`, `llm-toolkit init --codeburn` debe migrarlo a `hooks = true`, eliminar la clave deprecated y preservar otras claves existentes.
+
 El contenido visible para usuarios, mensajes de ayuda y documentación debe mantenerse en español.
 
 ## CodeBurn
@@ -60,3 +69,5 @@ llm-toolkit guard stop
 ```
 
 Los comandos `guard` manuales son herramientas de diagnóstico; el flujo normal se dispara por hooks de Codex.
+
+`llm-toolkit doctor` y `llm-toolkit status` deben aceptar `hooks = true` como OK. Si detectan solo `codex_hooks = true`, deben reportarlo como legacy/deprecated y sugerir migración con `llm-toolkit init --codeburn`.

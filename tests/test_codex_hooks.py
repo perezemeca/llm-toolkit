@@ -21,13 +21,14 @@ def invoke_in_path(tmp_path: Path, args: list[str], monkeypatch) -> object:
     return runner.invoke(app, args)
 
 
-def test_init_codeburn_crea_config_con_codex_hooks_true(tmp_path: Path, monkeypatch) -> None:
+def test_init_codeburn_crea_config_con_hooks_true(tmp_path: Path, monkeypatch) -> None:
     result = invoke_in_path(tmp_path, ["init", "--codeburn"], monkeypatch)
 
     assert result.exit_code == 0
     config = (tmp_path / ".codex" / "config.toml").read_text(encoding="utf-8")
     assert "[features]" in config
-    assert "codex_hooks = true" in config
+    assert "hooks = true" in config
+    assert "codex_hooks" not in config
 
 
 def test_init_codeburn_preserva_config_existente(tmp_path: Path, monkeypatch) -> None:
@@ -41,8 +42,25 @@ def test_init_codeburn_preserva_config_existente(tmp_path: Path, monkeypatch) ->
     config = config_path.read_text(encoding="utf-8")
     assert '[model]\nname = "gpt-test"' in config
     assert "foo = true" in config
-    assert "codex_hooks = true" in config
+    assert "hooks = true" in config
     assert "codex_hooks = false" not in config
+    assert config.count("[features]") == 1
+
+
+def test_init_codeburn_migra_codex_hooks_true_a_hooks_true(tmp_path: Path, monkeypatch) -> None:
+    config_path = tmp_path / ".codex" / "config.toml"
+    config_path.parent.mkdir()
+    config_path.write_text('[model]\nname = "gpt-test"\n\n[features]\nfoo = true\ncodex_hooks = true\n', encoding="utf-8")
+
+    result = invoke_in_path(tmp_path, ["init", "--codeburn"], monkeypatch)
+
+    assert result.exit_code == 0
+    config = config_path.read_text(encoding="utf-8")
+    assert '[model]\nname = "gpt-test"' in config
+    assert "foo = true" in config
+    assert "hooks = true" in config
+    assert "codex_hooks" not in config
+    assert config.count("[features]") == 1
 
 
 def test_init_codeburn_crea_hooks_json_y_script(tmp_path: Path, monkeypatch) -> None:
@@ -63,6 +81,31 @@ def test_doctor_detecta_automatizacion_codeburn_guard_ok(tmp_path: Path, monkeyp
     assert report.exit_code == 0
     assert "automatización CodeBurn Guard" in report.output
     assert "configurada" in report.output
+    assert "hooks habilitado" in report.output
+    assert "true" in report.output
+
+
+def test_doctor_detecta_codex_hooks_true_como_legacy(tmp_path: Path, monkeypatch) -> None:
+    config_path = tmp_path / ".codex" / "config.toml"
+    hooks_json_path = tmp_path / ".codex" / "hooks.json"
+    hook_script_path = tmp_path / ".codex" / "hooks" / "llm_toolkit_guard_hook.py"
+    config_path.parent.mkdir()
+    hook_script_path.parent.mkdir()
+    config_path.write_text("[features]\ncodex_hooks = true\n", encoding="utf-8")
+    hooks_json_path.write_text("{}\n", encoding="utf-8")
+    hook_script_path.write_text("print('ok')\n", encoding="utf-8")
+
+    status = get_codex_hook_status(tmp_path)
+    report = invoke_in_path(tmp_path, ["status"], monkeypatch)
+
+    assert status.hooks_enabled is False
+    assert status.legacy_hooks_enabled is True
+    assert status.migration_needed is True
+    assert status.automation_ok is True
+    assert report.exit_code == 0
+    assert "hooks habilitado" in report.output
+    assert "legacy/deprecated" in report.output
+    assert "llm-toolkit init --codeburn" in report.output
 
 
 def test_hooks_json_contiene_eventos_requeridos(tmp_path: Path, monkeypatch) -> None:

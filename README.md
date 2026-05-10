@@ -92,6 +92,15 @@ llm-toolkit init --rtk --caveman lite --codeburn
 
 `--codeburn` crea o actualiza el bloque CodeBurn, instala hooks de Codex en `.codex/` y agrega las reglas de CodeBurn Guard en `AGENTS.md`. No instala CodeBurn automáticamente.
 
+La configuración generada usa el feature flag vigente de Codex:
+
+```toml
+[features]
+hooks = true
+```
+
+Si encuentra una configuración legacy con `codex_hooks = true`, `init --codeburn` la migra a `hooks = true` y elimina la clave deprecated para evitar warnings de Codex.
+
 ### `llm-toolkit install-rtk`
 
 Instala `rtk.exe` en Windows desde GitHub Releases y lo agrega al `PATH` de usuario si hace falta.
@@ -166,6 +175,8 @@ Guard no bloquea tareas si CodeBurn falla, no está instalado o no tiene datos l
 ### `llm-toolkit doctor` Y `llm-toolkit status`
 
 Revisan el estado del proyecto, las integraciones disponibles, el bloque CodeBurn en `AGENTS.md` y comandos recomendados.
+
+Para CodeBurn Guard, `doctor` y `status` reportan `hooks habilitado` como OK cuando `.codex/config.toml` contiene `hooks = true`. Si solo existe `codex_hooks = true`, lo muestran como legacy/deprecated y sugieren ejecutar `llm-toolkit init --codeburn` para migrar.
 
 ```powershell
 llm-toolkit doctor

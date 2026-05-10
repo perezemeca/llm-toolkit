@@ -150,18 +150,28 @@ if __name__ == "__main__":
 class CodexHookStatus:
     config_exists: bool
     hooks_enabled: bool
+    legacy_hooks_enabled: bool
     hooks_json_exists: bool
     hook_script_exists: bool
 
     @property
     def automation_ok(self) -> bool:
-        return self.config_exists and self.hooks_enabled and self.hooks_json_exists and self.hook_script_exists
+        return (
+            self.config_exists
+            and (self.hooks_enabled or self.legacy_hooks_enabled)
+            and self.hooks_json_exists
+            and self.hook_script_exists
+        )
+
+    @property
+    def migration_needed(self) -> bool:
+        return self.legacy_hooks_enabled and not self.hooks_enabled
 
 
 def _enable_hooks_in_config(content: str) -> str:
     lines = content.splitlines()
     if not lines:
-        return "[features]\ncodex_hooks = true\n"
+        return "[features]\nhooks = true\n"
 
     output: list[str] = []
     in_features = False
@@ -172,7 +182,7 @@ def _enable_hooks_in_config(content: str) -> str:
         stripped = line.strip()
         is_header = stripped.startswith("[") and stripped.endswith("]")
         if is_header and in_features and not wrote_key:
-            output.append("codex_hooks = true")
+            output.append("hooks = true")
             wrote_key = True
         if stripped == "[features]":
             saw_features = True
@@ -183,18 +193,21 @@ def _enable_hooks_in_config(content: str) -> str:
             in_features = False
             output.append(line)
             continue
-        if in_features and stripped.startswith("codex_hooks"):
-            output.append("codex_hooks = true")
-            wrote_key = True
-            continue
+        if in_features:
+            key = stripped.split("=", 1)[0].strip()
+            if key in {"hooks", "codex_hooks"}:
+                if not wrote_key:
+                    output.append("hooks = true")
+                    wrote_key = True
+                continue
         output.append(line)
 
     if in_features and not wrote_key:
-        output.append("codex_hooks = true")
+        output.append("hooks = true")
     if not saw_features:
         if output and output[-1].strip():
             output.append("")
-        output.extend(["[features]", "codex_hooks = true"])
+        output.extend(["[features]", "hooks = true"])
     return "\n".join(output).rstrip() + "\n"
 
 
@@ -259,20 +272,37 @@ def install_codex_guard_hooks(root: Path | str = ".") -> CodexHookStatus:
     return get_codex_hook_status(project_root)
 
 
+def _feature_flags(content: str) -> tuple[bool, bool]:
+    hooks_enabled = False
+    legacy_hooks_enabled = False
+    in_features = False
+    for line in content.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            in_features = stripped == "[features]"
+            continue
+        if not in_features or "=" not in stripped:
+            continue
+        key, value = stripped.split("=", 1)
+        enabled = value.split("#", 1)[0].strip().lower() == "true"
+        if key.strip() == "hooks":
+            hooks_enabled = enabled
+        elif key.strip() == "codex_hooks":
+            legacy_hooks_enabled = enabled
+    return hooks_enabled, legacy_hooks_enabled
+
+
 def get_codex_hook_status(root: Path | str = ".") -> CodexHookStatus:
     project_root = Path(root)
     config = project_root / CODEX_CONFIG_PATH
     hooks_json = project_root / CODEX_HOOKS_JSON_PATH
     hook_script = project_root / CODEX_GUARD_HOOK_PATH
     config_content = read_text(config)
-    hooks_enabled = bool(
-        config.exists()
-        and "[features]" in config_content
-        and "codex_hooks = true" in config_content
-    )
+    hooks_enabled, legacy_hooks_enabled = _feature_flags(config_content) if config.exists() else (False, False)
     return CodexHookStatus(
         config_exists=config.exists(),
         hooks_enabled=hooks_enabled,
+        legacy_hooks_enabled=legacy_hooks_enabled,
         hooks_json_exists=hooks_json.exists(),
         hook_script_exists=hook_script.exists(),
     )

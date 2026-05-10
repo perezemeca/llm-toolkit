@@ -103,9 +103,15 @@ def build_report(root: Path | str = ".") -> DoctorReport:
             "existe" if codex_hooks.config_exists else "no existe",
         ),
         Check(
-            "codex_hooks habilitado",
+            "hooks habilitado",
             codex_hooks.hooks_enabled,
-            "true" if codex_hooks.hooks_enabled else "no configurado",
+            "true"
+            if codex_hooks.hooks_enabled
+            else (
+                "legacy/deprecated: codex_hooks = true; ejecutar llm-toolkit init --codeburn"
+                if codex_hooks.legacy_hooks_enabled
+                else "no configurado"
+            ),
         ),
         Check(
             ".codex/hooks.json",

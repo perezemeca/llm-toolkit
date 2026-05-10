@@ -90,6 +90,15 @@ La optimización se activa automáticamente mediante Codex hooks instalados por:
 llm-toolkit init --codeburn
 ```
 
+La configuración de Codex generada usa:
+
+```toml
+[features]
+hooks = true
+```
+
+Si existe `codex_hooks = true`, ejecutar `llm-toolkit init --codeburn` para migrar al flag vigente y eliminar el warning deprecated.
+
 Al inicio de una tarea de programación con Codex, revisar si existe:
 
 ```powershell
