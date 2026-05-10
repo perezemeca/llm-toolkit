@@ -71,3 +71,28 @@ llm-toolkit guard stop
 Los comandos `guard` manuales son herramientas de diagnóstico; el flujo normal se dispara por hooks de Codex.
 
 `llm-toolkit doctor` y `llm-toolkit status` deben aceptar `hooks = true` como OK. Si detectan solo `codex_hooks = true`, deben reportarlo como legacy/deprecated y sugerir migración con `llm-toolkit init --codeburn`.
+
+## Flutter/Dart
+
+`llm-toolkit doctor` y `llm-toolkit status` detectan `pubspec.yaml` y reportan Flutter/Dart en PATH.
+
+Para Flutter:
+
+```powershell
+rtk flutter pub get
+rtk flutter analyze
+rtk flutter test
+flutter test --reporter compact
+flutter analyze --no-pub
+```
+
+Para Dart:
+
+```powershell
+rtk dart pub get
+rtk dart analyze
+rtk dart test
+dart test --reporter compact
+```
+
+Si RTK ejecuta Flutter/Dart como fallback, usar la salida compacta propia de Flutter/Dart y RTK para git/diffs.

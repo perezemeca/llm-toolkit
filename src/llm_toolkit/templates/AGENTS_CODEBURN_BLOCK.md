@@ -48,7 +48,7 @@ Al inicio de una tarea de programación con Codex, revisar si existe:
 .llm-toolkit\alerts\CODEX_ALERT.md
 ```
 
-Después de ejecutar tests, los hooks ejecutan automáticamente:
+Después de ejecutar tests o análisis soportados (`flutter analyze`, `dart analyze`), los hooks ejecutan automáticamente:
 
 ```powershell
 llm-toolkit guard check --write-alert

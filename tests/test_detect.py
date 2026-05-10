@@ -21,3 +21,26 @@ def test_detectar_python_por_pyproject(tmp_path: Path) -> None:
     (tmp_path / "pyproject.toml").write_text("[project]\nname='demo'\n", encoding="utf-8")
 
     assert detect_stacks(tmp_path) == ("python",)
+
+
+def test_detectar_flutter_por_pubspec_con_sdk_flutter(tmp_path: Path) -> None:
+    (tmp_path / "pubspec.yaml").write_text(
+        "name: demo\n"
+        "dependencies:\n"
+        "  flutter:\n"
+        "    sdk: flutter\n",
+        encoding="utf-8",
+    )
+
+    assert detect_stacks(tmp_path) == ("flutter",)
+
+
+def test_detectar_dart_por_pubspec_sin_flutter(tmp_path: Path) -> None:
+    (tmp_path / "pubspec.yaml").write_text(
+        "name: demo\n"
+        "dependencies:\n"
+        "  collection: ^1.18.0\n",
+        encoding="utf-8",
+    )
+
+    assert detect_stacks(tmp_path) == ("dart",)

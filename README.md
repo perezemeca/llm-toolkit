@@ -73,6 +73,33 @@ llm-toolkit guard check --write-alert
 
 Si aparece `.llm-toolkit\alerts\CODEX_ALERT.md`, revisar la alerta antes de continuar con más contexto.
 
+## Flujo Recomendado En Proyecto Flutter/Dart
+
+`doctor` y `status` detectan proyectos Flutter/Dart mediante `pubspec.yaml`. Para Flutter también reconocen `sdk: flutter`, dependencia `flutter` o estructura típica del proyecto.
+
+Para Flutter:
+
+```powershell
+rtk flutter pub get
+rtk flutter analyze
+rtk flutter test
+flutter test --reporter compact
+flutter analyze --no-pub
+```
+
+Para Dart:
+
+```powershell
+rtk dart pub get
+rtk dart analyze
+rtk dart test
+dart test --reporter compact
+```
+
+Si RTK trata estos comandos como fallback, usar la salida compacta propia de Flutter/Dart y RTK para git/diffs.
+
+CodeBurn Guard se dispara automáticamente después de `flutter test`, `dart test`, `flutter analyze` y `dart analyze` cuando los hooks de Codex están instalados.
+
 ## Comandos Principales
 
 ### `llm-toolkit init`
@@ -175,6 +202,8 @@ Guard no bloquea tareas si CodeBurn falla, no está instalado o no tiene datos l
 ### `llm-toolkit doctor` Y `llm-toolkit status`
 
 Revisan el estado del proyecto, las integraciones disponibles, el bloque CodeBurn en `AGENTS.md` y comandos recomendados.
+
+También reportan `Stack: flutter` o `Stack: dart`, `Flutter en PATH`, `Dart en PATH` y `pubspec.yaml`.
 
 Para CodeBurn Guard, `doctor` y `status` reportan `hooks habilitado` como OK cuando `.codex/config.toml` contiene `hooks = true`. Si solo existe `codex_hooks = true`, lo muestran como legacy/deprecated y sugieren ejecutar `llm-toolkit init --codeburn` para migrar.
 

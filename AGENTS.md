@@ -23,6 +23,23 @@ Si el proyecto tiene pytest instalado, preferir:
 rtk pytest -p no:cacheprovider
 ```
 
+Si el proyecto es Flutter/Dart, usar comandos específicos cuando correspondan:
+
+```powershell
+rtk flutter pub get
+rtk flutter analyze
+rtk flutter test
+flutter test --reporter compact
+flutter analyze --no-pub
+
+rtk dart pub get
+rtk dart analyze
+rtk dart test
+dart test --reporter compact
+```
+
+Si RTK ejecuta Flutter/Dart como fallback, usar la salida compacta propia de Flutter/Dart y RTK para git/diffs.
+
 No versionar `.rtk/`. La base local de RTK debe quedar en `.rtk/history.db`.
 <!-- LLM-TOOLKIT:RTK:END -->
 
@@ -32,7 +49,7 @@ No versionar `.rtk/`. La base local de RTK debe quedar en `.rtk/history.db`.
 Caveman es un modo opcional para reportes de programación con Codex. No reemplaza RTK: RTK compacta salidas de comandos y Caveman compacta respuestas del agente.
 
 - Uso permitido: solo programación con Codex.
-- Nivel configurado: lite
+- Nivel configurado: full
 - Nivel por defecto: lite.
 
 Reportes compactos:
@@ -105,7 +122,7 @@ Al inicio de una tarea de programación con Codex, revisar si existe:
 .llm-toolkit\alerts\CODEX_ALERT.md
 ```
 
-Después de ejecutar tests, los hooks ejecutan automáticamente:
+Después de ejecutar tests o análisis soportados (`flutter analyze`, `dart analyze`), los hooks ejecutan automáticamente:
 
 ```powershell
 llm-toolkit guard check --write-alert

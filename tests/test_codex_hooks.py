@@ -162,6 +162,34 @@ def test_hook_script_detecta_pytest_y_dispara_guard_check(tmp_path: Path, monkey
     assert marker.exists()
 
 
+def test_hook_script_detecta_flutter_y_dart_test_analyze(tmp_path: Path, monkeypatch) -> None:
+    for command in ("flutter test", "dart test", "flutter analyze", "dart analyze"):
+        project = tmp_path / command.replace(" ", "-")
+        project.mkdir()
+        invoke_in_path(project, ["init", "--codeburn"], monkeypatch)
+        bin_dir = project / "bin"
+        bin_dir.mkdir()
+        marker = project / "guard-called.txt"
+        (bin_dir / "llm-toolkit.cmd").write_text(f"@echo off\r\necho called > \"{marker}\"\r\nexit /b 0\r\n", encoding="utf-8")
+        script = project / ".codex" / "hooks" / "llm_toolkit_guard_hook.py"
+        env = os.environ.copy()
+        env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
+        payload = {"tool_input": {"command": command}}
+
+        result = subprocess.run(
+            ["python", str(script), "post_tool_use"],
+            cwd=project,
+            input=json.dumps(payload),
+            capture_output=True,
+            text=True,
+            timeout=10,
+            env=env,
+        )
+
+        assert result.returncode == 0
+        assert marker.exists()
+
+
 def test_init_codeburn_es_idempotente_y_no_reescribe_hooks_identicos(tmp_path: Path, monkeypatch) -> None:
     first = invoke_in_path(tmp_path, ["init", "--codeburn"], monkeypatch)
     assert first.exit_code == 0

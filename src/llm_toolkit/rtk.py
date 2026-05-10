@@ -85,8 +85,35 @@ def recommended_commands(stacks: tuple[str, ...], git_enabled: bool) -> list[str
         commands.append("rtk go test ./...")
     if "dotnet" in stacks:
         commands.append("rtk dotnet test")
+    if "flutter" in stacks:
+        commands.extend(
+            [
+                "rtk flutter pub get",
+                "rtk flutter analyze",
+                "rtk flutter test",
+                "flutter test --reporter compact",
+                "flutter analyze --no-pub",
+            ]
+        )
+    if "dart" in stacks:
+        commands.extend(
+            [
+                "rtk dart pub get",
+                "rtk dart analyze",
+                "rtk dart test",
+                "dart test --reporter compact",
+            ]
+        )
     commands.append("rtk gain")
     return commands
+
+
+def recommended_notes(stacks: tuple[str, ...]) -> list[str]:
+    if "flutter" in stacks or "dart" in stacks:
+        return [
+            "Nota Flutter/Dart: si RTK ejecuta esos comandos como fallback, usar la salida compacta propia de Flutter/Dart y RTK para git/diffs.",
+        ]
+    return []
 
 
 def rtk_in_path() -> bool:
